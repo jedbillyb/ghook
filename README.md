@@ -415,7 +415,7 @@ curl -H "Content-Type: application/json" \
 
 ### Common Issues
 
-#### "Invalid signature — rejected"
+#### "Invalid signature - rejected"
 - **Cause**: `GITHUB_WEBHOOK_SECRET` mismatch between `.env` and GitHub App
 - **Fix**: Ensure exact string match, check for extra spaces
 - **Verify**: Check GitHub App settings → Webhook secret
