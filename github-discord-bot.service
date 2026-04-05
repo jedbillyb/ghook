@@ -1,0 +1,15 @@
+[Unit]
+Description=GitHub → Discord Notification Bot
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/github-discord-bot
+ExecStart=/usr/bin/node src/server.js
+Restart=on-failure
+RestartSec=5
+EnvironmentFile=/opt/github-discord-bot/.env
+
+[Install]
+WantedBy=multi-user.target
