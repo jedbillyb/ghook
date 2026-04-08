@@ -21,7 +21,7 @@ function handleIssues(payload) {
       { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
       { name: "Status", value: LABELS[action], inline: true },
     ],
-    footer: { text: "ghook", icon_url: "https://github.com/jedbillyb.png" },
+    footer: { text: "https://github.com/jedbillyb/ghook", icon_url: "https://raw.githubusercontent.com/jedbillyb/ghook/main/assets/android-chrome-512x512-g.png" },
     timestamp: new Date().toISOString(),
   });
 }
