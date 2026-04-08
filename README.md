@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/android-chrome-512x512.png" width="200" />
+</p>
+
 # ghook - GitHub → Discord Bridge
 
 A comprehensive, production-ready Node.js application that bridges GitHub webhook events to Discord notifications via rich embeds. This bot uses GitHub Apps for global repository coverage, eliminating the need to configure webhooks per repository.
