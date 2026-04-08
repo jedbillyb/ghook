@@ -16,9 +16,7 @@ function handleFork(payload) {
       { name: "Total Forks", value: `🍴 ${repository.forks_count.toLocaleString()}`, inline: true },
       { name: "Original", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
     ],
-    footer: {
-      text: "GitHub • Fork",
-    },
+    footer: { text: "ghook", icon_url: "https://github.com/jedbillyb.png" },
     timestamp: new Date().toISOString(),
   });
 }

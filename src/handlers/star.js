@@ -18,9 +18,7 @@ function handleStar(payload) {
       { name: "Forks", value: `🍴 ${repository.forks_count.toLocaleString()}`, inline: true },
       { name: "Language", value: repository.language || "Unknown", inline: true },
     ],
-    footer: {
-      text: "GitHub • Starred",
-    },
+    footer: { text: "ghook", icon_url: "https://github.com/jedbillyb.png" },
     timestamp: new Date().toISOString(),
   });
 }

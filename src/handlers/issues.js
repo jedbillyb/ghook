@@ -21,9 +21,7 @@ function handleIssues(payload) {
       { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
       { name: "Status", value: LABELS[action], inline: true },
     ],
-    footer: {
-      text: "GitHub • Issue",
-    },
+    footer: { text: "ghook", icon_url: "https://github.com/jedbillyb.png" },
     timestamp: new Date().toISOString(),
   });
 }

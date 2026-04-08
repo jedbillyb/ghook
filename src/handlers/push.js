@@ -21,9 +21,7 @@ function handlePush(payload) {
       { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
       { name: "Branch", value: `\`${branch}\``, inline: true },
     ],
-    footer: {
-      text: "GitHub • Push",
-    },
+    footer: { text: "ghook", icon_url: "https://github.com/jedbillyb.png" },
     timestamp: new Date().toISOString(),
   });
 }

@@ -1,19 +1,23 @@
 const { handlePush } = require("./handlers/push");
 const { handleCreate } = require("./handlers/create");
+const { handleDelete } = require("./handlers/delete");
 const { handleStar } = require("./handlers/star");
 const { handleFork } = require("./handlers/fork");
 const { handlePullRequest } = require("./handlers/pullRequest");
 const { handleIssues } = require("./handlers/issues");
 const { handleIssueComment } = require("./handlers/issueComment");
+const { handleRelease } = require("./handlers/release");
 
 const handlers = {
   push: handlePush,
   create: handleCreate,
+  delete: handleDelete,
   watch: handleStar,        // "star" events use the "watch" event type
   fork: handleFork,
   pull_request: handlePullRequest,
   issues: handleIssues,
   issue_comment: handleIssueComment,
+  release: handleRelease,
 };
 
 function routeEvent(event, payload) {

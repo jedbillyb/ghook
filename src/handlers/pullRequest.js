@@ -24,9 +24,7 @@ function handlePullRequest(payload) {
       { name: "Status", value: LABELS[state], inline: true },
       { name: "Branch", value: `\`${pr.head.ref}\` → \`${pr.base.ref}\``, inline: false },
     ],
-    footer: {
-      text: "GitHub • Pull Request",
-    },
+    footer: { text: "ghook", icon_url: "https://github.com/jedbillyb.png" },
     timestamp: new Date().toISOString(),
   });
 }

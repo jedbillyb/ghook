@@ -9,6 +9,7 @@ A comprehensive, production-ready Node.js application that bridges GitHub webhoo
 - [Architecture](#-architecture)
 - [Supported Events](#-supported-events)
 - [Prerequisites](#-prerequisites)
+- [GitHub App Setup](#-github-app-setup)
 - [Installation & Setup](#-installation--setup)
 - [Configuration](#-configuration)
 - [Deployment](#-deployment)
@@ -60,11 +61,13 @@ ghook/
 │   └── handlers/          # Event-specific processing
 │       ├── push.js        # Git push events
 │       ├── create.js      # Repository/branch/tag creation
+│       ├── delete.js      # Repository/branch/tag deletion
 │       ├── star.js        # Repository starring
 │       ├── fork.js        # Repository forking
 │       ├── pullRequest.js # Pull request events
 │       ├── issues.js      # Issue events
 │       ├── issueComment.js# Issue comment events
+│       ├── release.js     # Release events
 ├── github-discord-bot.service  # Systemd service configuration
 ├── package.json               # Node.js dependencies and scripts
 ├── .env.example               # Environment variables template
@@ -109,12 +112,14 @@ Each handler extracts relevant data from the GitHub webhook payload and formats 
 | Event Type | Handler | Description | Discord Color |
 |------------|---------|-------------|---------------|
 | `push` | `handlePush` | Code commits pushed to repository | Green (#238636) |
-| `create` | `handleCreate` | New repository, branch, or tag created | Blue (#58a6ff) |
+| `create` | `handleCreate` | New repository, branch, or tag created | Blue (#1f6feb) |
+| `delete` | `handleDelete` | Repository, branch, or tag deleted | Red (#f85149) |
 | `watch` | `handleStar` | Repository starred by user | Yellow (#e3b341) |
-| `fork` | `handleFork` | Repository forked | Purple (#8b5cf6) |
+| `fork` | `handleFork` | Repository forked | Purple (#a371f7) |
 | `pull_request` | `handlePullRequest` | PR opened, closed, merged, etc. | Blue (#58a6ff) |
 | `issues` | `handleIssues` | Issue opened, closed, reopened | Green/Red/Orange |
-| `issue_comment` | `handleIssueComment` | New comment on issue | Gray (#6b7280) |
+| `issue_comment` | `handleIssueComment` | New comment on issue | Blue (#58a6ff) |
+| `release` | `handleRelease` | Release published, released, or prereleased | Green (#238636) |
 
 ### Example Embed Formats
 
@@ -130,7 +135,32 @@ Pushed 3 commits to `main`
 Repository: [owner/repo](https://github.com/owner/repo)
 Branch: `main`
 
-GitHub • Push • [timestamp]
+ghook • [timestamp]
+```
+
+#### Delete Event
+```
+[User Avatar] User Name
+Deleted branch `feature-x`
+
+Repository: [owner/repo](https://github.com/owner/repo)
+Type: Branch
+
+ghook • [timestamp]
+```
+
+#### Release Event
+```
+[User Avatar] User Name
+🚀 v1.0.0
+
+Release notes or description here...
+
+Repository: [owner/repo](https://github.com/owner/repo)
+Tag: `v1.0.0`
+Type: Release
+
+ghook • [timestamp]
 ```
 
 #### Star Event
@@ -144,7 +174,7 @@ Stars: ⭐ 1,234
 Forks: 🍴 567
 Language: JavaScript
 
-GitHub • Starred • [timestamp]
+ghook • [timestamp]
 ```
 
 ## Prerequisites
@@ -164,6 +194,59 @@ GitHub • Starred • [timestamp]
 - **Inbound**: Port 3000 (configurable) for webhook delivery
 - **Outbound**: HTTPS access to Discord API (`discord.com`)
 - **Optional**: HTTPS certificate for secure webhook URLs
+
+## GitHub App Setup
+
+This bot uses GitHub Apps for webhook delivery. You need to create a GitHub App and configure it with the correct permissions and webhook URL.
+
+### Creating a GitHub App
+
+1. **Go to GitHub Settings**
+   - Navigate to [GitHub Settings → Developer settings → GitHub Apps](https://github.com/settings/apps)
+   - Click "New GitHub App"
+
+2. **Basic Information**
+   - **GitHub App name**: `ghook` (or your preferred name)
+   - **Description**: Brief description of your Discord bot
+   - **Homepage URL**: Your repository URL or personal website
+
+3. **Permissions & Events**
+   - **Repository permissions**:
+     - `Contents`: Read-only (required for release events)
+     - `Issues`: Read-only
+     - `Metadata`: Read-only (required)
+     - `Pull requests`: Read-only
+   - **Subscribe to events**:
+     - ✅ Push
+     - ✅ Create
+     - ✅ Delete
+     - ✅ Fork
+     - ✅ Issues
+     - ✅ Issue comment
+     - ✅ Pull request
+     - ✅ Release
+     - ✅ Watch (for star events)
+
+4. **Webhook Configuration**
+   - **Webhook URL**: `https://yourdomain.com/webhook` (your server URL)
+   - **Webhook secret**: Generate a strong random string (same as `GITHUB_WEBHOOK_SECRET` in `.env`)
+   - **SSL verification**: Enable (recommended)
+
+5. **Install the App**
+   - After creating, go to "Install App" in the left sidebar
+   - Install on your account or organization
+   - Select repositories or "All repositories"
+
+### Required Permissions Summary
+
+| Permission | Access | Required For |
+|------------|--------|--------------|
+| `Contents` | Read | Release events, repository metadata |
+| `Issues` | Read | Issue and comment events |
+| `Metadata` | Read | Repository information (required) |
+| `Pull requests` | Read | Pull request events |
+
+**Note**: The app uses webhook secrets for authentication, not private keys, so no key download is needed.
 
 ## Installation & Setup
 
