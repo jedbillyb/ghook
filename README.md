@@ -1,4 +1,4 @@
-<p align="center">
+<p align="left">
   <img src="assets/android-chrome-512x512.png" width="200" />
 </p>
 
