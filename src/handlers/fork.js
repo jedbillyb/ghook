@@ -16,7 +16,10 @@ function handleFork(payload) {
       { name: "Total Forks", value: `🍴 ${repository.forks_count.toLocaleString()}`, inline: true },
       { name: "Original", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
     ],
-    footer: { text: "https://github.com/jedbillyb/ghook", icon_url: "https://raw.githubusercontent.com/jedbillyb/ghook/main/assets/android-chrome-512x512-g.png" },
+    footer: { 
+      text: repository.full_name, 
+      icon_url: "https://raw.githubusercontent.com/jedbillyb/ghook/main/assets/android-chrome-512x512-g.png" 
+    },
     timestamp: new Date().toISOString(),
   });
 }
