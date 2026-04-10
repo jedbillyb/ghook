@@ -3,6 +3,10 @@ const { bufferEvent } = require("../utils/buffer");
 
 function handlePush(payload) {
   const { repository, ref, pusher, commits, compare, sender } = payload;
+  
+  // Suppress notifications for pushes with no commits (e.g. force pushes/resets)
+  if (!commits || commits.length === 0) return;
+
   const isTag = ref.startsWith("refs/tags/");
   const key = isTag ? `tag:${repository.full_name}:${ref}` : `push:${repository.full_name}:${ref}`;
 
