@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 // Parse raw body for signature verification, then JSON
 app.use(express.json({
+  limit: '10mb',
   verify: (req, _res, buf) => { req.rawBody = buf; }
 }));
 
