@@ -21,7 +21,7 @@ function handleIssueComment(payload) {
       { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
     ],
     footer: { 
-      text: repository.full_name, 
+      text: "https://github.com/jedbillyb/ghook", 
       icon_url: "https://raw.githubusercontent.com/jedbillyb/ghook/main/assets/android-chrome-512x512-g.png" 
     },
     timestamp: new Date().toISOString(),
