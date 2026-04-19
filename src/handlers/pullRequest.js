@@ -28,7 +28,7 @@ function handlePullRequest(payload) {
       { name: "Branch", value: `\`${pr.head.ref}\` → \`${pr.base.ref}\``, inline: false },
     ],
     footer: { 
-      text: "https://github.com/jedbillyb/ghook", 
+      text: "github.com/jedbillyb/ghook", 
       icon_url: "https://raw.githubusercontent.com/jedbillyb/ghook/main/assets/android-chrome-512x512-g.png" 
     },
     timestamp: new Date().toISOString(),
