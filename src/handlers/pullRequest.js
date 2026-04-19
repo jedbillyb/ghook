@@ -20,7 +20,7 @@ function handlePullRequest(payload) {
     },
     title: `#${pr.number} ${pr.title}`,
     description,
-    url: pr.html_url,
+    url: repository.html_url,
     color: COLORS[state] || 0x58a6ff,
     fields: [
       { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
