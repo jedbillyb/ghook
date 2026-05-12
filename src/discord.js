@@ -1,15 +1,17 @@
 const https = require("https");
-const url = require("url");
 
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "";
+const FLAG_IS_COMPONENTS_V2 = 1 << 15;
 
-function sendEmbed(embed) {
-  const payload = JSON.stringify({ embeds: [embed] });
+function post(body) {
+  const payload = JSON.stringify(body);
   const parsed = new URL(WEBHOOK_URL);
+  const search = new URLSearchParams(parsed.search);
+  search.set("with_components", "true");
 
   const options = {
     hostname: parsed.hostname,
-    path: parsed.pathname + parsed.search,
+    path: `${parsed.pathname}?${search.toString()}`,
     method: "POST",
     headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) },
   };
@@ -22,4 +24,8 @@ function sendEmbed(embed) {
   req.end();
 }
 
-module.exports = { sendEmbed };
+function sendContainer(container) {
+  post({ flags: FLAG_IS_COMPONENTS_V2, components: [container] });
+}
+
+module.exports = { sendContainer };

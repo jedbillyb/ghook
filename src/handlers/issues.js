@@ -1,4 +1,5 @@
-const { sendEmbed } = require("../discord");
+const { sendContainer } = require("../discord");
+const { buildContainer } = require("../components");
 
 const COLORS = { opened: 0x238636, closed: 0xf85149, reopened: 0xd29922, edited: 0x58a6ff };
 const LABELS = { opened: "Opened", closed: "Closed", reopened: "Reopened", edited: "Edited" };
@@ -10,7 +11,7 @@ function handleIssues(payload) {
   const seeMore = `\n\n[See more](${issue.html_url})`;
   const description = (issue.body || "").slice(0, 300) + seeMore;
 
-  sendEmbed({
+  sendContainer(buildContainer({
     author: {
       name: sender.login,
       url: `https://github.com/${sender.login}`,
@@ -25,12 +26,7 @@ function handleIssues(payload) {
       { name: "Type", value: "Issue", inline: true },
       { name: "Status", value: LABELS[action], inline: true },
     ],
-    footer: { 
-      text: "github.com/jedbillyb/ghook", 
-      icon_url: "https://raw.githubusercontent.com/jedbillyb/ghook/main/assets/android-chrome-512x512-g.png" 
-    },
-    timestamp: new Date().toISOString(),
-  });
+  }));
 }
 
 module.exports = { handleIssues };

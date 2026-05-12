@@ -1,4 +1,5 @@
-const { sendEmbed } = require("../discord");
+const { sendContainer } = require("../discord");
+const { buildContainer } = require("../components");
 const { suppressEvent } = require("../utils/buffer");
 
 const ACTIONS = ["published", "released", "prereleased"];
@@ -14,11 +15,11 @@ function handleRelease(payload) {
   const isPrerelease = release.prerelease;
   const color = isPrerelease ? 0xe3b341 : 0x238636;
   const label = isPrerelease ? "Pre-release" : "Release";
-  
+
   const seeMore = `\n\n[See more](${release.html_url})`;
   const description = (release.body || "").slice(0, 400) + seeMore;
 
-  sendEmbed({
+  sendContainer(buildContainer({
     author: {
       name: sender.login,
       url: `https://github.com/${sender.login}`,
@@ -33,12 +34,7 @@ function handleRelease(payload) {
       { name: "Tag", value: `\`${release.tag_name}\``, inline: true },
       { name: "Type", value: label, inline: true },
     ],
-    footer: { 
-      text: "github.com/jedbillyb/ghook", 
-      icon_url: "https://raw.githubusercontent.com/jedbillyb/ghook/main/assets/android-chrome-512x512-g.png" 
-    },
-    timestamp: new Date().toISOString(),
-  });
+  }));
 }
 
 module.exports = { handleRelease };
