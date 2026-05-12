@@ -13,7 +13,7 @@ function handleFork(payload) {
     url: forkee.html_url,
     color: 0xa371f7,
     fields: [
-      { name: "Total Forks", value: `🍴 ${repository.forks_count.toLocaleString()}`, inline: true },
+      { name: "Total Forks", value: repository.forks_count.toLocaleString(), inline: true },
       { name: "Original", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
     ],
     footer: { 

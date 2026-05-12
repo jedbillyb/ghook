@@ -24,7 +24,7 @@ function handleRelease(payload) {
       url: `https://github.com/${sender.login}`,
       icon_url: sender.avatar_url,
     },
-    title: `${isPrerelease ? "🔖" : "🚀"} ${release.name || release.tag_name}`,
+    title: release.name || release.tag_name,
     description,
     url: release.html_url,
     color,
