@@ -326,6 +326,9 @@ GITHUB_WEBHOOK_SECRET=your_strong_random_secret_here
 
 # Server
 PORT=3000
+
+# Privacy
+NOTIFY_PRIVATE_REPOS=false
 ```
 
 **Discord webhook URL** — Discord → Server Settings → Integrations → Webhooks → create or copy.
@@ -333,6 +336,8 @@ PORT=3000
 **Webhook secret** — 32+ character random string. Must match exactly in GitHub App settings.
 
 **Port** — Default `3000`. Change if occupied, and ensure your firewall allows inbound connections.
+
+**Notify private repos** — Default `false`. Private repository events are skipped to avoid leaking activity from private work into a public channel. Set to `true` to opt in.
 
 ---
 
