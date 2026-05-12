@@ -40,7 +40,7 @@ function suppressEvent(key) {
     const existing = pendingEvents.get(key);
     clearTimeout(existing.timeout);
     pendingEvents.delete(key);
-    console.log(`🔇 Suppressed event for key: ${key}`);
+    console.log(`Suppressed event for key: ${key}`);
     return true;
   }
   return false;
