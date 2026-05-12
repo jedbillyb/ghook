@@ -22,7 +22,7 @@ const handlers = {
 
 // Skip notifications for private repositories unless explicitly enabled.
 // Set NOTIFY_PRIVATE_REPOS=true in the environment to opt in.
-const NOTIFY_PRIVATE_REPOS = String(process.env.NOTIFY_PRIVATE_REPOS).toLowerCase() === "true";
+const NOTIFY_PRIVATE_REPOS = process.env.NOTIFY_PRIVATE_REPOS === "true";
 
 function isPrivateRepoPayload(payload) {
   return Boolean(payload && payload.repository && payload.repository.private === true);
@@ -30,7 +30,7 @@ function isPrivateRepoPayload(payload) {
 
 function routeEvent(event, payload) {
   if (!NOTIFY_PRIVATE_REPOS && isPrivateRepoPayload(payload)) {
-    console.log(`ℹ️  Skipping ${event} event for private repository: ${payload.repository.full_name}`);
+    console.log(`Skipping ${event} event for private repository: ${payload.repository.full_name}`);
     return;
   }
 
