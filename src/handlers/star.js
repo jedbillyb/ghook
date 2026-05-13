@@ -1,10 +1,9 @@
-const { sendContainer } = require("../discord");
-const { buildContainer } = require("../components");
+const { send } = require("../discord");
 
 function handleStar(payload) {
   if (payload.action !== "started") return;
   const { repository, sender } = payload;
-  sendContainer(buildContainer({
+  send({
     author: {
       name: sender.login,
       url: `https://github.com/${sender.login}`,
@@ -19,7 +18,7 @@ function handleStar(payload) {
       { name: "Forks", value: repository.forks_count.toLocaleString(), inline: true },
       { name: "Language", value: repository.language || "Unknown", inline: true },
     ],
-  }));
+  });
 }
 
 module.exports = { handleStar };

@@ -329,6 +329,10 @@ PORT=3000
 
 # Privacy
 NOTIFY_PRIVATE_REPOS=false
+
+# Discord rendering (optional)
+DISCORD_LEGACY_EMBEDS=false
+WEBHOOK_FOOTER=github.com/jedbillyb/ghook
 ```
 
 **Discord webhook URL** — Discord → Server Settings → Integrations → Webhooks → create or copy.
@@ -338,6 +342,10 @@ NOTIFY_PRIVATE_REPOS=false
 **Port** — Default `3000`. Change if occupied, and ensure your firewall allows inbound connections.
 
 **Notify private repos** — Default `false`. Private repository events are skipped to avoid leaking activity from private work into a public channel. Set to `true` to opt in.
+
+**Discord legacy embeds** — Default `false`. Messages are rendered using Discord's Components V2 format. Set to `true` to fall back to the classic embed rendering.
+
+**Webhook footer** — Default `github.com/jedbillyb/ghook`. Override the small attribution text shown at the bottom of each message (useful when self-hosting).
 
 ---
 

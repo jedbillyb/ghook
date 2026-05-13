@@ -1,5 +1,4 @@
-const { sendContainer } = require("../discord");
-const { buildContainer } = require("../components");
+const { send } = require("../discord");
 
 function handleIssueComment(payload) {
   if (payload.action !== "created") return;
@@ -8,7 +7,7 @@ function handleIssueComment(payload) {
   const seeMore = `\n\n[See more](${comment.html_url})`;
   const description = (comment.body || "").slice(0, 300) + seeMore;
 
-  sendContainer(buildContainer({
+  send({
     author: {
       name: sender.login,
       url: `https://github.com/${sender.login}`,
@@ -21,7 +20,7 @@ function handleIssueComment(payload) {
     fields: [
       { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
     ],
-  }));
+  });
 }
 
 module.exports = { handleIssueComment };

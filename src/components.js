@@ -6,8 +6,6 @@ const COMPONENT_TYPE = {
   CONTAINER: 17,
 };
 
-const FOOTER_TEXT = "github.com/jedbillyb/ghook";
-
 function textDisplay(content) {
   return { type: COMPONENT_TYPE.TEXT_DISPLAY, content };
 }
@@ -59,7 +57,9 @@ function fieldsBlock(fields) {
 
 function footerLine({ footer, timestamp }) {
   const parts = [];
-  if (footer && footer.text) parts.push(footer.text);
+  if (footer && footer.text) {
+    parts.push(footer.url ? `[${footer.text}](${footer.url})` : footer.text);
+  }
   if (timestamp) {
     const epochSec = Math.floor(new Date(timestamp).getTime() / 1000);
     if (Number.isFinite(epochSec)) parts.push(`<t:${epochSec}:R>`);
@@ -87,7 +87,7 @@ function buildContainer({ author, title, url, description, color, fields, footer
   }
 
   const footer$ = footerLine({
-    footer: footer || { text: FOOTER_TEXT },
+    footer,
     timestamp: timestamp || new Date().toISOString(),
   });
   if (footer$) {

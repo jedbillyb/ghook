@@ -1,5 +1,4 @@
-const { sendContainer } = require("../discord");
-const { buildContainer } = require("../components");
+const { send } = require("../discord");
 const { bufferEvent } = require("../utils/buffer");
 
 function handleCreate(payload) {
@@ -15,7 +14,7 @@ function handleCreate(payload) {
 
 function sendCreateMessage(payload) {
   const { ref_type, ref, repository, sender } = payload;
-  sendContainer(buildContainer({
+  send({
     author: {
       name: sender.login,
       url: `https://github.com/${sender.login}`,
@@ -28,7 +27,7 @@ function sendCreateMessage(payload) {
       { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
       { name: "Type", value: ref_type.charAt(0).toUpperCase() + ref_type.slice(1), inline: true },
     ],
-  }));
+  });
 }
 
 module.exports = { handleCreate };

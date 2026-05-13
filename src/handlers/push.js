@@ -1,5 +1,4 @@
-const { sendContainer } = require("../discord");
-const { buildContainer } = require("../components");
+const { send } = require("../discord");
 const { bufferEvent } = require("../utils/buffer");
 
 function handlePush(payload) {
@@ -43,7 +42,7 @@ function sendPushMessage(payload) {
     commitList += `\n*and ${remaining} more commit${remaining !== 1 ? "s" : ""}...*`;
   }
 
-  sendContainer(buildContainer({
+  send({
     author: {
       name: pusher.name || pusher.login,
       url: `https://github.com/${pusher.name || pusher.login}`,
@@ -57,7 +56,7 @@ function sendPushMessage(payload) {
       { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
       { name: isTag ? "Tag" : "Branch", value: `\`${branch}\``, inline: true },
     ],
-  }));
+  });
 }
 
 module.exports = { handlePush };

@@ -1,5 +1,4 @@
-const { sendContainer } = require("../discord");
-const { buildContainer } = require("../components");
+const { send } = require("../discord");
 
 const COLORS = { opened: 0x238636, closed: 0xf85149, merged: 0xa371f7 };
 const LABELS = { opened: "Opened", closed: "Closed", merged: "Merged" };
@@ -13,7 +12,7 @@ function handlePullRequest(payload) {
   const seeMore = `\n\n[See more](${pr.html_url})`;
   const description = (pr.body || "").slice(0, 300) + seeMore;
 
-  sendContainer(buildContainer({
+  send({
     author: {
       name: sender.login,
       url: `https://github.com/${sender.login}`,
@@ -28,7 +27,7 @@ function handlePullRequest(payload) {
       { name: "Status", value: LABELS[state], inline: true },
       { name: "Branch", value: `\`${pr.head.ref}\` → \`${pr.base.ref}\``, inline: false },
     ],
-  }));
+  });
 }
 
 module.exports = { handlePullRequest };

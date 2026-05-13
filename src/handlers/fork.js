@@ -1,9 +1,8 @@
-const { sendContainer } = require("../discord");
-const { buildContainer } = require("../components");
+const { send } = require("../discord");
 
 function handleFork(payload) {
   const { forkee, repository, sender } = payload;
-  sendContainer(buildContainer({
+  send({
     author: {
       name: sender.login,
       url: `https://github.com/${sender.login}`,
@@ -17,7 +16,7 @@ function handleFork(payload) {
       { name: "Total Forks", value: repository.forks_count.toLocaleString(), inline: true },
       { name: "Original", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
     ],
-  }));
+  });
 }
 
 module.exports = { handleFork };

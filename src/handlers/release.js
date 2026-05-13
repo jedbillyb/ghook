@@ -1,5 +1,4 @@
-const { sendContainer } = require("../discord");
-const { buildContainer } = require("../components");
+const { send } = require("../discord");
 const { suppressEvent } = require("../utils/buffer");
 
 const ACTIONS = ["published", "released", "prereleased"];
@@ -19,7 +18,7 @@ function handleRelease(payload) {
   const seeMore = `\n\n[See more](${release.html_url})`;
   const description = (release.body || "").slice(0, 400) + seeMore;
 
-  sendContainer(buildContainer({
+  send({
     author: {
       name: sender.login,
       url: `https://github.com/${sender.login}`,
@@ -34,7 +33,7 @@ function handleRelease(payload) {
       { name: "Tag", value: `\`${release.tag_name}\``, inline: true },
       { name: "Type", value: label, inline: true },
     ],
-  }));
+  });
 }
 
 module.exports = { handleRelease };
