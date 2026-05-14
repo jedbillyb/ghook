@@ -4,7 +4,9 @@ const { buildContainer } = require("./components");
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "";
 const LEGACY_EMBEDS = process.env.DISCORD_LEGACY_EMBEDS === "true";
 const FOOTER_TEXT = process.env.WEBHOOK_FOOTER || "github.com/jedbillyb/ghook";
-const FOOTER_URL = process.env.WEBHOOK_FOOTER_URL || "https://github.com/jedbillyb/ghook";
+const FOOTER_URL = "WEBHOOK_FOOTER_URL" in process.env
+  ? process.env.WEBHOOK_FOOTER_URL
+  : "https://github.com/jedbillyb/ghook";
 const FLAG_IS_COMPONENTS_V2 = 1 << 15;
 
 function post(body, { withComponents } = {}) {
@@ -30,7 +32,9 @@ function post(body, { withComponents } = {}) {
 
 function specWithFooter(spec) {
   if (spec.footer) return spec;
-  return { ...spec, footer: { text: FOOTER_TEXT, url: FOOTER_URL } };
+  const footer = { text: FOOTER_TEXT };
+  if (FOOTER_URL) footer.url = FOOTER_URL;
+  return { ...spec, footer };
 }
 
 function sendV2(spec) {
