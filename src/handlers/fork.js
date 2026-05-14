@@ -1,8 +1,8 @@
-const { sendEmbed } = require("../discord");
+const { send } = require("../discord");
 
 function handleFork(payload) {
   const { forkee, repository, sender } = payload;
-  sendEmbed({
+  send({
     author: {
       name: sender.login,
       url: `https://github.com/${sender.login}`,
@@ -16,11 +16,6 @@ function handleFork(payload) {
       { name: "Total Forks", value: repository.forks_count.toLocaleString(), inline: true },
       { name: "Original", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
     ],
-    footer: { 
-      text: "github.com/jedbillyb/ghook", 
-      icon_url: "https://raw.githubusercontent.com/jedbillyb/ghook/main/assets/android-chrome-512x512-g.png" 
-    },
-    timestamp: new Date().toISOString(),
   });
 }
 

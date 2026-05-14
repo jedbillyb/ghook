@@ -1,4 +1,4 @@
-const { sendEmbed } = require("../discord");
+const { send } = require("../discord");
 
 function handleIssueComment(payload) {
   if (payload.action !== "created") return;
@@ -7,7 +7,7 @@ function handleIssueComment(payload) {
   const seeMore = `\n\n[See more](${comment.html_url})`;
   const description = (comment.body || "").slice(0, 300) + seeMore;
 
-  sendEmbed({
+  send({
     author: {
       name: sender.login,
       url: `https://github.com/${sender.login}`,
@@ -20,11 +20,6 @@ function handleIssueComment(payload) {
     fields: [
       { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
     ],
-    footer: { 
-      text: "github.com/jedbillyb/ghook", 
-      icon_url: "https://raw.githubusercontent.com/jedbillyb/ghook/main/assets/android-chrome-512x512-g.png" 
-    },
-    timestamp: new Date().toISOString(),
   });
 }
 
