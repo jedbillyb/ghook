@@ -12,7 +12,7 @@ const handlers = {
   push: handlePush,
   create: handleCreate,
   delete: handleDelete,
-  watch: handleStar,
+  watch: handleStar,        // "star" events use the "watch" event type
   fork: handleFork,
   pull_request: handlePullRequest,
   issues: handleIssues,
