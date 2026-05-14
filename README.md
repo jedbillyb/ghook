@@ -331,8 +331,9 @@ PORT=3000
 NOTIFY_PRIVATE_REPOS=false
 
 # Discord rendering (optional)
-DISCORD_LEGACY_EMBEDS=false
-WEBHOOK_FOOTER=github.com/jedbillyb/ghook
+# DISCORD_LEGACY_EMBEDS=true       # set to fall back to classic embeds
+# WEBHOOK_FOOTER=github.com/jedbillyb/ghook
+# WEBHOOK_FOOTER_URL=https://github.com/jedbillyb/ghook
 ```
 
 **Discord webhook URL** — Discord → Server Settings → Integrations → Webhooks → create or copy.
@@ -343,9 +344,9 @@ WEBHOOK_FOOTER=github.com/jedbillyb/ghook
 
 **Notify private repos** — Default `false`. Private repository events are skipped to avoid leaking activity from private work into a public channel. Set to `true` to opt in.
 
-**Discord legacy embeds** — Default `false`. Messages are rendered using Discord's Components V2 format. Set to `true` to fall back to the classic embed rendering.
+**Discord legacy embeds** — Default `false`. Messages are rendered using Discord's Components V2 format. Set to `true` to fall back to the classic embed rendering. Components V2 is still server-gated by Discord: if your webhook's server hasn't been granted access, V2 messages fail silently — set `DISCORD_LEGACY_EMBEDS=true` until access is rolled out.
 
-**Webhook footer** — Default `github.com/jedbillyb/ghook`. Override the small attribution text shown at the bottom of each message (useful when self-hosting).
+**Webhook footer** — Default `github.com/jedbillyb/ghook`. Override the small attribution text shown at the bottom of each message (useful when self-hosting). Pair with `WEBHOOK_FOOTER_URL` to change the link target in Components V2 mode (defaults to `https://github.com/jedbillyb/ghook`).
 
 ---
 

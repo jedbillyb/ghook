@@ -26,17 +26,17 @@ function headerSection({ author, title, url, description }) {
   if (description) {
     texts.push(textDisplay(description));
   }
-  if (texts.length === 0) return null;
+  if (texts.length === 0) return [];
 
   if (author && author.icon_url) {
-    return {
+    return [{
       type: COMPONENT_TYPE.SECTION,
       components: texts,
       accessory: {
         type: COMPONENT_TYPE.THUMBNAIL,
         media: { url: author.icon_url },
       },
-    };
+    }];
   }
   return texts;
 }
@@ -60,10 +60,8 @@ function footerLine({ footer, timestamp }) {
   if (footer && footer.text) {
     parts.push(footer.url ? `[${footer.text}](${footer.url})` : footer.text);
   }
-  if (timestamp) {
-    const epochSec = Math.floor(new Date(timestamp).getTime() / 1000);
-    if (Number.isFinite(epochSec)) parts.push(`<t:${epochSec}:R>`);
-  }
+  const epochSec = Math.floor(new Date(timestamp).getTime() / 1000);
+  if (Number.isFinite(epochSec)) parts.push(`<t:${epochSec}:R>`);
   if (parts.length === 0) return null;
   return textDisplay(`-# ${parts.join(" • ")}`);
 }
@@ -71,14 +69,7 @@ function footerLine({ footer, timestamp }) {
 function buildContainer({ author, title, url, description, color, fields, footer, timestamp }) {
   const components = [];
 
-  const header$ = headerSection({ author, title, url, description });
-  if (header$) {
-    if (Array.isArray(header$)) {
-      components.push(...header$);
-    } else {
-      components.push(header$);
-    }
-  }
+  components.push(...headerSection({ author, title, url, description }));
 
   const fields$ = fieldsBlock(fields);
   if (fields$) {

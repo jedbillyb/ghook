@@ -4,7 +4,7 @@ const { buildContainer } = require("./components");
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "";
 const LEGACY_EMBEDS = process.env.DISCORD_LEGACY_EMBEDS === "true";
 const FOOTER_TEXT = process.env.WEBHOOK_FOOTER || "github.com/jedbillyb/ghook";
-const FOOTER_URL = "https://github.com/jedbillyb/ghook";
+const FOOTER_URL = process.env.WEBHOOK_FOOTER_URL || "https://github.com/jedbillyb/ghook";
 const FLAG_IS_COMPONENTS_V2 = 1 << 15;
 
 function post(body, { withComponents } = {}) {
