@@ -6,6 +6,7 @@
 
 **GitHub → Discord webhook bridge. One setup, every repo, forever.**
 
+[![CI](https://github.com/jedbillyb/ghook/actions/workflows/ci.yml/badge.svg)](https://github.com/jedbillyb/ghook/actions/workflows/ci.yml)
 [![Live](https://img.shields.io/badge/deployed-live-brightgreen?style=flat-square)](https://github.com/jedbillyb/ghook)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](./LICENSE)
 [![Node](https://img.shields.io/badge/Node.js-20+-339933?style=flat-square&logo=node.js)](https://nodejs.org)
@@ -425,6 +426,16 @@ server {
 ---
 
 ## Testing
+
+### Unit tests
+
+Unit tests run on Node's built-in test runner — no extra dependencies required.
+
+```bash
+npm test
+```
+
+Covers signature verification, the Components V2 / legacy embed builders, the Discord routing logic, and the push-batching utility. Every PR is also exercised by the GitHub Actions workflow at [`.github/workflows/ci.yml`](.github/workflows/ci.yml) against Node 20 and 22.
 
 ### Health & Webhook Endpoints
 
