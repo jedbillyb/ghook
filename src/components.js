@@ -21,7 +21,7 @@ function headerSection({ author, title, url, description }) {
     texts.push(textDisplay(`-# ${name}`));
   }
   if (title) {
-    texts.push(textDisplay(url ? `## [${title}](${url})` : `## ${title}`));
+    texts.push(textDisplay(url ? `**[${title}](${url})**` : `**${title}**`));
   }
   if (description) {
     texts.push(textDisplay(description));

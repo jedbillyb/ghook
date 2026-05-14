@@ -23,7 +23,17 @@ function post(body, { withComponents } = {}) {
   };
 
   const req = https.request(options, (res) => {
-    if (res.statusCode >= 400) console.error(`Discord API error: ${res.statusCode}`);
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      res.resume();
+      return;
+    }
+    let body = "";
+    res.setEncoding("utf8");
+    res.on("data", (chunk) => { body += chunk; });
+    res.on("end", () => {
+      console.error(`Discord API error: ${res.statusCode} ${res.statusMessage || ""}`.trim());
+      if (body) console.error("Discord response body:", body);
+    });
   });
   req.on("error", (e) => console.error("Discord send error:", e.message));
   req.write(payload);
