@@ -334,6 +334,10 @@ NOTIFY_PRIVATE_REPOS=false
 # DISCORD_LEGACY_EMBEDS=true       # set to fall back to classic embeds
 # WEBHOOK_FOOTER=github.com/jedbillyb/ghook
 # WEBHOOK_FOOTER_URL=https://github.com/jedbillyb/ghook
+
+# Event filters (optional)
+# IGNORED_EVENTS=watch,fork
+# BRANCH_FILTER=main,develop,release/*
 ```
 
 **Discord webhook URL** — Discord → Server Settings → Integrations → Webhooks → create or copy.
@@ -347,6 +351,10 @@ NOTIFY_PRIVATE_REPOS=false
 **Discord legacy embeds** — Default `false`. Messages are rendered using Discord's Components V2 format. Set to `true` to fall back to the classic embed rendering. Components V2 is still server-gated by Discord: if your webhook's server hasn't been granted access, V2 messages fail silently — set `DISCORD_LEGACY_EMBEDS=true` until access is rolled out.
 
 **Webhook footer** — Default `github.com/jedbillyb/ghook`. Override the small attribution text shown at the bottom of each message (useful when self-hosting). Pair with `WEBHOOK_FOOTER_URL` to change the link target in Components V2 mode (defaults to `https://github.com/jedbillyb/ghook`).
+
+**Ignored events** — Optional. Comma-separated list of GitHub event names that should be dropped before reaching their handler (e.g. `IGNORED_EVENTS=watch,fork` to silence stars and forks).
+
+**Branch filter** — Optional. Comma-separated list of branch name patterns. When set, `push`, `create`, and `delete` events whose branch does not match any pattern are dropped. Tag refs always pass through. `*` matches a single path segment, so `release/*` matches `release/v1` but not `release/v1/hotfix`. Example: `BRANCH_FILTER=main,develop,release/*`. Other event types (issues, pull requests, comments, …) are unaffected.
 
 ---
 

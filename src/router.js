@@ -12,7 +12,7 @@ const handlers = {
   push: handlePush,
   create: handleCreate,
   delete: handleDelete,
-  watch: handleStar,        // "star" events use the "watch" event type
+  watch: handleStar,
   fork: handleFork,
   pull_request: handlePullRequest,
   issues: handleIssues,
@@ -20,17 +20,59 @@ const handlers = {
   release: handleRelease,
 };
 
-// Skip notifications for private repositories unless explicitly enabled.
-// Set NOTIFY_PRIVATE_REPOS=true in the environment to opt in.
+const BRANCH_SCOPED_EVENTS = new Set(["push", "create", "delete"]);
+
 const NOTIFY_PRIVATE_REPOS = process.env.NOTIFY_PRIVATE_REPOS === "true";
+const IGNORED_EVENTS = parseList(process.env.IGNORED_EVENTS);
+const BRANCH_FILTER = parseList(process.env.BRANCH_FILTER);
+const BRANCH_FILTER_REGEXES = BRANCH_FILTER.map(toBranchRegex);
+
+function parseList(raw) {
+  if (!raw) return [];
+  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+function toBranchRegex(pattern) {
+  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*");
+  return new RegExp(`^${escaped}$`);
+}
 
 function isPrivateRepoPayload(payload) {
   return Boolean(payload && payload.repository && payload.repository.private === true);
 }
 
-function routeEvent(event, payload) {
+function extractBranch(event, payload) {
+  if (!payload || typeof payload.ref !== "string") return null;
+  if ((event === "create" || event === "delete") && payload.ref_type !== "branch") return null;
+  if (event === "push" && payload.ref.startsWith("refs/tags/")) return null;
+  return payload.ref.replace(/^refs\/heads\//, "");
+}
+
+function branchMatchesFilter(branch) {
+  if (BRANCH_FILTER_REGEXES.length === 0) return true;
+  return BRANCH_FILTER_REGEXES.some((re) => re.test(branch));
+}
+
+function shouldRoute(event, payload) {
+  if (IGNORED_EVENTS.includes(event)) {
+    return { allow: false, reason: `event "${event}" is in IGNORED_EVENTS` };
+  }
   if (!NOTIFY_PRIVATE_REPOS && isPrivateRepoPayload(payload)) {
-    console.log(`Skipping ${event} event for private repository: ${payload.repository.full_name}`);
+    return { allow: false, reason: `private repository: ${payload.repository.full_name}` };
+  }
+  if (BRANCH_SCOPED_EVENTS.has(event) && BRANCH_FILTER_REGEXES.length > 0) {
+    const branch = extractBranch(event, payload);
+    if (branch !== null && !branchMatchesFilter(branch)) {
+      return { allow: false, reason: `branch "${branch}" not in BRANCH_FILTER` };
+    }
+  }
+  return { allow: true };
+}
+
+function routeEvent(event, payload) {
+  const decision = shouldRoute(event, payload);
+  if (!decision.allow) {
+    console.log(`Skipping ${event} event: ${decision.reason}`);
     return;
   }
 
@@ -42,4 +84,4 @@ function routeEvent(event, payload) {
   }
 }
 
-module.exports = { routeEvent };
+module.exports = { routeEvent, shouldRoute };
