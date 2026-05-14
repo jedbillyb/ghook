@@ -7,6 +7,7 @@ const { handlePullRequest } = require("./handlers/pullRequest");
 const { handleIssues } = require("./handlers/issues");
 const { handleIssueComment } = require("./handlers/issueComment");
 const { handleRelease } = require("./handlers/release");
+const { handleWorkflowRun } = require("./handlers/workflowRun");
 
 const handlers = {
   push: handlePush,
@@ -18,6 +19,7 @@ const handlers = {
   issues: handleIssues,
   issue_comment: handleIssueComment,
   release: handleRelease,
+  workflow_run: handleWorkflowRun,
 };
 
 // Skip notifications for private repositories unless explicitly enabled.
