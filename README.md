@@ -90,7 +90,8 @@ ghook/
 │       ├── pullRequest.js  # Pull request lifecycle
 │       ├── issues.js       # Issue events
 │       ├── issueComment.js # Issue comment events
-│       └── release.js      # Release events
+│       ├── release.js      # Release events
+│       └── workflowRun.js  # GitHub Actions run events
 ├── github-discord-bot.service  # systemd unit file
 ├── package.json
 ├── .env.example
@@ -124,6 +125,7 @@ ghook/
 | `issues` | `handleIssues` | Issue opened, closed, reopened | Green/Red/Orange |
 | `issue_comment` | `handleIssueComment` | Comment on an issue | Blue `#58a6ff` |
 | `release` | `handleRelease` | Release published or prereleased | Green `#238636` |
+| `workflow_run` | `handleWorkflowRun` | GitHub Actions run completed | Green/Red/Grey/Orange |
 
 ### Example Embed Formats
 
@@ -233,13 +235,14 @@ ghook • [timestamp]
    - **Homepage URL**: your repo or personal site
 
 3. Set **Repository permissions**:
+   - `Actions` → Read-only *(for workflow run notifications)*
    - `Contents` → Read-only
    - `Issues` → Read-only
    - `Metadata` → Read-only *(required)*
    - `Pull requests` → Read-only
 
 4. Subscribe to **events**:
-   - ✅ Push, Create, Delete, Fork, Issues, Issue comment, Pull request, Release, Watch
+   - ✅ Push, Create, Delete, Fork, Issues, Issue comment, Pull request, Release, Watch, Workflow run
 
 5. Configure the **webhook**:
    - **URL**: `https://yourdomain.com/webhook`
