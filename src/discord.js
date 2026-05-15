@@ -1,7 +1,7 @@
 const https = require("https");
 const { buildContainer } = require("./components");
+const { buildResolver } = require("./routes");
 
-const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "";
 const LEGACY_EMBEDS = process.env.DISCORD_LEGACY_EMBEDS === "true";
 const FOOTER_TEXT = process.env.WEBHOOK_FOOTER || "github.com/jedbillyb/ghook";
 const FOOTER_URL = "WEBHOOK_FOOTER_URL" in process.env
@@ -9,9 +9,20 @@ const FOOTER_URL = "WEBHOOK_FOOTER_URL" in process.env
   : "https://github.com/jedbillyb/ghook";
 const FLAG_IS_COMPONENTS_V2 = 1 << 15;
 
-function post(body, { withComponents } = {}) {
+const resolver = buildResolver(process.env);
+let currentEvent = null;
+
+function setCurrentEvent(event) {
+  currentEvent = event;
+}
+
+function post(url, body, { withComponents } = {}) {
+  if (!url) {
+    console.error("Discord send skipped: no webhook URL resolved.");
+    return;
+  }
   const payload = JSON.stringify(body);
-  const parsed = new URL(WEBHOOK_URL);
+  const parsed = new URL(url);
   const search = new URLSearchParams(parsed.search);
   if (withComponents) search.set("with_components", "true");
 
@@ -47,14 +58,14 @@ function specWithFooter(spec) {
   return { ...spec, footer };
 }
 
-function sendV2(spec) {
+function sendV2(url, spec) {
   const container = buildContainer(specWithFooter(spec));
-  post({ flags: FLAG_IS_COMPONENTS_V2, components: [container] }, { withComponents: true });
+  post(url, { flags: FLAG_IS_COMPONENTS_V2, components: [container] }, { withComponents: true });
 }
 
-function sendLegacy(spec) {
+function sendLegacy(url, spec) {
   const embed = toLegacyEmbed(specWithFooter(spec));
-  post({ embeds: [embed] });
+  post(url, { embeds: [embed] });
 }
 
 function toLegacyEmbed(spec) {
@@ -83,8 +94,9 @@ function toLegacyEmbed(spec) {
 }
 
 function send(spec) {
-  if (LEGACY_EMBEDS) sendLegacy(spec);
-  else sendV2(spec);
+  const url = resolver.resolve(currentEvent);
+  if (LEGACY_EMBEDS) sendLegacy(url, spec);
+  else sendV2(url, spec);
 }
 
-module.exports = { send };
+module.exports = { send, setCurrentEvent };
