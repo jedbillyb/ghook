@@ -4,7 +4,7 @@ const { t } = require("../i18n");
 const COLORS = { opened: 0x238636, closed: 0xf85149, merged: 0xa371f7 };
 const KNOWN_STATES = new Set(["opened", "closed", "merged", "reopened"]);
 
-function handlePullRequest(payload) {
+function handlePullRequest(payload, event) {
   const { action, pull_request: pr, repository, sender } = payload;
   if (!["opened", "closed", "reopened"].includes(action)) return;
 
@@ -28,7 +28,7 @@ function handlePullRequest(payload) {
       { name: t("field.status"), value: KNOWN_STATES.has(state) ? t(`pr.status.${state}`) : state, inline: true },
       { name: t("field.branch"), value: `\`${pr.head.ref}\` → \`${pr.base.ref}\``, inline: false },
     ],
-  });
+  }, event);
 }
 
 module.exports = { handlePullRequest };

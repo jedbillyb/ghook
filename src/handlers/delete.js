@@ -1,7 +1,7 @@
 const { send } = require("../discord");
 const { t } = require("../i18n");
 
-function handleDelete(payload) {
+function handleDelete(payload, event) {
   const { ref_type, ref, repository, sender } = payload;
   send({
     author: {
@@ -16,7 +16,7 @@ function handleDelete(payload) {
       { name: t("field.repository"), value: `[${repository.full_name}](${repository.html_url})`, inline: true },
       { name: t("field.type"), value: t(`refTypeLabel.${ref_type}`), inline: true },
     ],
-  });
+  }, event);
 }
 
 module.exports = { handleDelete };

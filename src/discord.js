@@ -10,11 +10,6 @@ const FOOTER_URL = "WEBHOOK_FOOTER_URL" in process.env
 const FLAG_IS_COMPONENTS_V2 = 1 << 15;
 
 const resolver = buildResolver(process.env);
-let currentEvent = null;
-
-function setCurrentEvent(event) {
-  currentEvent = event;
-}
 
 function post(url, body, { withComponents } = {}) {
   if (!url) {
@@ -93,10 +88,10 @@ function toLegacyEmbed(spec) {
   return embed;
 }
 
-function send(spec) {
-  const url = resolver.resolve(currentEvent);
+function send(spec, event) {
+  const url = resolver.resolve(event);
   if (LEGACY_EMBEDS) sendLegacy(url, spec);
   else sendV2(url, spec);
 }
 
-module.exports = { send, setCurrentEvent };
+module.exports = { send };

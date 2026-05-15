@@ -3,7 +3,7 @@ const { t } = require("../i18n");
 
 const COLORS = { opened: 0x238636, closed: 0xf85149, reopened: 0xd29922, edited: 0x58a6ff };
 
-function handleIssues(payload) {
+function handleIssues(payload, event) {
   const { action, issue, repository, sender } = payload;
   if (!COLORS[action]) return;
 
@@ -25,7 +25,7 @@ function handleIssues(payload) {
       { name: t("field.type"), value: t("issue.type"), inline: true },
       { name: t("field.status"), value: t(`issue.status.${action}`), inline: true },
     ],
-  });
+  }, event);
 }
 
 module.exports = { handleIssues };

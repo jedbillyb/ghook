@@ -1,7 +1,7 @@
 const { send } = require("../discord");
 const { t, activeLocale } = require("../i18n");
 
-function handleFork(payload) {
+function handleFork(payload, event) {
   const { forkee, repository, sender } = payload;
   send({
     author: {
@@ -17,7 +17,7 @@ function handleFork(payload) {
       { name: t("field.totalForks"), value: repository.forks_count.toLocaleString(activeLocale), inline: true },
       { name: t("field.original"), value: `[${repository.full_name}](${repository.html_url})`, inline: true },
     ],
-  });
+  }, event);
 }
 
 module.exports = { handleFork };
