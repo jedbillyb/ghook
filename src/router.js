@@ -1,3 +1,4 @@
+const { setCurrentEvent } = require("./discord");
 const { handlePush } = require("./handlers/push");
 const { handleCreate } = require("./handlers/create");
 const { handleDelete } = require("./handlers/delete");
@@ -80,6 +81,7 @@ function routeEvent(event, payload) {
 
   const handler = handlers[event];
   if (handler) {
+    setCurrentEvent(event);
     handler(payload);
   } else {
     console.log(`ℹ️  Unhandled event: ${event}`);
