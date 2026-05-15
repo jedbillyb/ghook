@@ -9,7 +9,7 @@ const CONCLUSIONS = {
   action_required: 0xd29922,
 };
 
-function handleWorkflowRun(payload) {
+function handleWorkflowRun(payload, event) {
   if (payload.action !== "completed") return;
 
   const { workflow_run: run, repository, sender } = payload;
@@ -40,7 +40,7 @@ function handleWorkflowRun(payload) {
       { name: t("field.workflow"), value: run.name, inline: true },
       { name: t("field.event"), value: run.event || t("workflow.unknownEvent"), inline: true },
     ],
-  });
+  }, event);
 }
 
 module.exports = { handleWorkflowRun };

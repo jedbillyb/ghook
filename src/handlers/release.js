@@ -4,7 +4,7 @@ const { t } = require("../i18n");
 
 const ACTIONS = ["published", "released", "prereleased"];
 
-function handleRelease(payload) {
+function handleRelease(payload, event) {
   const { action, release, repository, sender } = payload;
   if (!ACTIONS.includes(action)) return;
 
@@ -14,10 +14,10 @@ function handleRelease(payload) {
   suppressEvent(`tag:${repository.full_name}:refs/tags/${release.tag_name}`);
 
   // Deduplicate - GitHub fires published/released/prereleased simultaneously
-  bufferEvent(releaseKey, payload, (finalPayload) => sendReleaseMessage(finalPayload), 2000);
+  bufferEvent(releaseKey, payload, (finalPayload) => sendReleaseMessage(finalPayload, event), 2000);
 }
 
-function sendReleaseMessage(payload) {
+function sendReleaseMessage(payload, event) {
   const { release, repository, sender } = payload;
   const isPrerelease = release.prerelease;
   const color = isPrerelease ? 0xe3b341 : 0x238636;
@@ -41,7 +41,7 @@ function sendReleaseMessage(payload) {
       { name: t("field.tag"), value: `\`${release.tag_name}\``, inline: true },
       { name: t("field.type"), value: label, inline: true },
     ],
-  });
+  }, event);
 }
 
 module.exports = { handleRelease };

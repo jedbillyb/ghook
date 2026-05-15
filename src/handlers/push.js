@@ -2,7 +2,7 @@ const { send } = require("../discord");
 const { bufferEvent } = require("../utils/buffer");
 const { t } = require("../i18n");
 
-function handlePush(payload) {
+function handlePush(payload, event) {
   const { repository, ref, commits } = payload;
 
   // Suppress notifications for pushes with no commits (e.g. force pushes/resets)
@@ -15,7 +15,7 @@ function handlePush(payload) {
   bufferEvent(
     key,
     payload,
-    (finalPayload) => sendPushMessage(finalPayload),
+    (finalPayload) => sendPushMessage(finalPayload, event),
     5000,
     (existing, incoming) => {
       existing.commits = [...(existing.commits || []), ...(incoming.commits || [])];
@@ -26,7 +26,7 @@ function handlePush(payload) {
   );
 }
 
-function sendPushMessage(payload) {
+function sendPushMessage(payload, event) {
   const { repository, ref, pusher, commits, compare, sender } = payload;
   const isTag = ref.startsWith("refs/tags/");
   const branch = ref.replace("refs/heads/", "").replace("refs/tags/", "");
@@ -58,7 +58,7 @@ function sendPushMessage(payload) {
       { name: t("field.repository"), value: `[${repository.full_name}](${repository.html_url})`, inline: true },
       { name: isTag ? t("field.tag") : t("field.branch"), value: `\`${branch}\``, inline: true },
     ],
-  });
+  }, event);
 }
 
 module.exports = { handlePush };

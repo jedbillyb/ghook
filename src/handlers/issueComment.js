@@ -1,7 +1,7 @@
 const { send } = require("../discord");
 const { t } = require("../i18n");
 
-function handleIssueComment(payload) {
+function handleIssueComment(payload, event) {
   if (payload.action !== "created") return;
   const { comment, issue, repository, sender } = payload;
 
@@ -21,7 +21,7 @@ function handleIssueComment(payload) {
     fields: [
       { name: t("field.repository"), value: `[${repository.full_name}](${repository.html_url})`, inline: true },
     ],
-  });
+  }, event);
 }
 
 module.exports = { handleIssueComment };

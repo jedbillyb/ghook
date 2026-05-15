@@ -114,9 +114,8 @@ function captureRequest(t) {
 
 test("send falls back to DISCORD_WEBHOOK_URL when event has no route", (t) => {
   const calls = captureRequest(t);
-  const { send, setCurrentEvent } = freshSend({ DISCORD_WEBHOOK_URL: DEFAULT_URL });
-  setCurrentEvent("push");
-  send({ title: "x" });
+  const { send } = freshSend({ DISCORD_WEBHOOK_URL: DEFAULT_URL });
+  send({ title: "x" }, "push");
   assert.equal(calls.length, 1);
   assert.equal(calls[0].opts.hostname, "discord.example");
   assert.match(calls[0].opts.path, /\/api\/webhooks\/0\/default/);
@@ -124,22 +123,20 @@ test("send falls back to DISCORD_WEBHOOK_URL when event has no route", (t) => {
 
 test("send dispatches to the routed webhook when a rule matches", (t) => {
   const calls = captureRequest(t);
-  const { send, setCurrentEvent } = freshSend({
+  const { send } = freshSend({
     DISCORD_WEBHOOK_URL: DEFAULT_URL,
     DISCORD_WEBHOOK_RELEASES: RELEASES_URL,
     ROUTES: "release:RELEASES",
   });
-  setCurrentEvent("release");
-  send({ title: "x" });
-  setCurrentEvent("push");
-  send({ title: "x" });
+  send({ title: "x" }, "release");
+  send({ title: "x" }, "push");
 
   assert.equal(calls.length, 2);
   assert.match(calls[0].opts.path, /\/api\/webhooks\/1\/releases/);
   assert.match(calls[1].opts.path, /\/api\/webhooks\/0\/default/);
 });
 
-test("send resolves to the default webhook when no event is set", (t) => {
+test("send resolves to the default webhook when no event is passed", (t) => {
   const calls = captureRequest(t);
   const { send } = freshSend({ DISCORD_WEBHOOK_URL: DEFAULT_URL });
   send({ title: "x" });
@@ -149,8 +146,30 @@ test("send resolves to the default webhook when no event is set", (t) => {
 
 test("send is a no-op when no URL can be resolved", (t) => {
   const calls = captureRequest(t);
-  const { send, setCurrentEvent } = freshSend({});
-  setCurrentEvent("push");
-  send({ title: "x" });
+  const { send } = freshSend({});
+  send({ title: "x" }, "push");
   assert.equal(calls.length, 0);
+});
+
+test("interleaved async sends resolve to the right webhook for each event", async (t) => {
+  const calls = captureRequest(t);
+  const { send } = freshSend({
+    DISCORD_WEBHOOK_URL: DEFAULT_URL,
+    DISCORD_WEBHOOK_RELEASES: RELEASES_URL,
+    DISCORD_WEBHOOK_CI: CI_URL,
+    ROUTES: "release:RELEASES,workflow_run:CI",
+  });
+
+  await Promise.all([
+    new Promise((r) => setTimeout(() => { send({ title: "RELEASE_MARKER" }, "release"); r(); }, 20)),
+    new Promise((r) => setTimeout(() => { send({ title: "WORKFLOW_MARKER" }, "workflow_run"); r(); }, 10)),
+  ]);
+
+  assert.equal(calls.length, 2);
+  const workflowCall = calls.find((c) => c.body.includes("WORKFLOW_MARKER"));
+  const releaseCall = calls.find((c) => c.body.includes("RELEASE_MARKER"));
+  assert.ok(workflowCall, "expected a call carrying the workflow payload");
+  assert.ok(releaseCall, "expected a call carrying the release payload");
+  assert.match(workflowCall.opts.path, /\/api\/webhooks\/2\/ci/);
+  assert.match(releaseCall.opts.path, /\/api\/webhooks\/1\/releases/);
 });

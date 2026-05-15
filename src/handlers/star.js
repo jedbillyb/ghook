@@ -1,7 +1,7 @@
 const { send } = require("../discord");
 const { t, activeLocale } = require("../i18n");
 
-function handleStar(payload) {
+function handleStar(payload, event) {
   if (payload.action !== "started") return;
   const { repository, sender } = payload;
   send({
@@ -19,7 +19,7 @@ function handleStar(payload) {
       { name: t("field.forks"), value: repository.forks_count.toLocaleString(activeLocale), inline: true },
       { name: t("field.language"), value: repository.language || t("star.unknownLanguage"), inline: true },
     ],
-  });
+  }, event);
 }
 
 module.exports = { handleStar };
