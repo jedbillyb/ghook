@@ -1,13 +1,13 @@
 const { send } = require("../discord");
+const { t } = require("../i18n");
 
 const COLORS = { opened: 0x238636, closed: 0xf85149, reopened: 0xd29922, edited: 0x58a6ff };
-const LABELS = { opened: "Opened", closed: "Closed", reopened: "Reopened", edited: "Edited" };
 
 function handleIssues(payload) {
   const { action, issue, repository, sender } = payload;
-  if (!LABELS[action]) return;
+  if (!COLORS[action]) return;
 
-  const seeMore = `\n\n[See more](${issue.html_url})`;
+  const seeMore = `\n\n[${t("seeMore")}](${issue.html_url})`;
   const description = (issue.body || "").slice(0, 300) + seeMore;
 
   send({
@@ -16,14 +16,14 @@ function handleIssues(payload) {
       url: `https://github.com/${sender.login}`,
       icon_url: sender.avatar_url,
     },
-    title: `Issue #${issue.number}: ${issue.title}`,
+    title: t("issue.title", { number: issue.number, title: issue.title }),
     description,
     url: issue.html_url,
     color: COLORS[action] || 0x58a6ff,
     fields: [
-      { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
-      { name: "Type", value: "Issue", inline: true },
-      { name: "Status", value: LABELS[action], inline: true },
+      { name: t("field.repository"), value: `[${repository.full_name}](${repository.html_url})`, inline: true },
+      { name: t("field.type"), value: t("issue.type"), inline: true },
+      { name: t("field.status"), value: t(`issue.status.${action}`), inline: true },
     ],
   });
 }

@@ -1,0 +1,63 @@
+{
+  "push.title.branch.one": "A poussé {count} commit sur la branche `{ref}`",
+  "push.title.branch.other": "A poussé {count} commits sur la branche `{ref}`",
+  "push.title.tag.one": "A poussé {count} commit sur le tag `{ref}`",
+  "push.title.tag.other": "A poussé {count} commits sur le tag `{ref}`",
+  "push.more.one": "et {count} commit de plus...",
+  "push.more.other": "et {count} commits de plus...",
+  "push.noCommits": "Aucun commit.",
+
+  "create.title": "{refType} `{ref}` créé",
+  "delete.title": "{refType} `{ref}` supprimé",
+  "refType.branch": "branche",
+  "refType.tag": "tag",
+  "refTypeLabel.branch": "Branche",
+  "refTypeLabel.tag": "Tag",
+
+  "pr.title": "#{number} {title}",
+  "pr.status.opened": "Ouverte",
+  "pr.status.closed": "Fermée",
+  "pr.status.merged": "Fusionnée",
+  "pr.status.reopened": "Rouverte",
+
+  "issue.title": "Issue #{number} : {title}",
+  "issue.status.opened": "Ouverte",
+  "issue.status.closed": "Fermée",
+  "issue.status.reopened": "Rouverte",
+  "issue.status.edited": "Modifiée",
+  "issue.type": "Issue",
+
+  "issueComment.title": "A commenté sur #{number} : {title}",
+
+  "release.type.release": "Release",
+  "release.type.prerelease": "Pré-release",
+
+  "workflow.title": "{name} : {label}",
+  "workflow.conclusion.success": "Réussi",
+  "workflow.conclusion.failure": "Échoué",
+  "workflow.conclusion.cancelled": "Annulé",
+  "workflow.conclusion.timed_out": "Expiré",
+  "workflow.conclusion.action_required": "Action requise",
+  "workflow.branchLabel": "Branche `{branch}`",
+  "workflow.unknownEvent": "inconnu",
+
+  "fork.title": "A forké {repo}",
+  "fork.description": "A créé [{repo}]({url})",
+
+  "star.unknownLanguage": "Inconnu",
+
+  "seeMore": "Voir plus",
+
+  "field.repository": "Dépôt",
+  "field.branch": "Branche",
+  "field.tag": "Tag",
+  "field.type": "Type",
+  "field.status": "Statut",
+  "field.workflow": "Workflow",
+  "field.event": "Événement",
+  "field.stars": "Étoiles",
+  "field.forks": "Forks",
+  "field.language": "Langage",
+  "field.totalForks": "Total des forks",
+  "field.original": "Original"
+}

@@ -347,6 +347,9 @@ NOTIFY_PRIVATE_REPOS=false
 # DISCORD_WEBHOOK_RELEASES=https://discord.com/api/webhooks/.../...
 # DISCORD_WEBHOOK_CI=https://discord.com/api/webhooks/.../...
 # ROUTES=release:RELEASES,workflow_run:CI
+
+# Localization (optional)
+# LOCALE=fr
 ```
 
 **Discord webhook URL** — Discord → Server Settings → Integrations → Webhooks → create or copy.
@@ -366,6 +369,8 @@ NOTIFY_PRIVATE_REPOS=false
 **Branch filter** — Optional. Comma-separated list of branch name patterns. When set, `push`, `create`, and `delete` events whose branch does not match any pattern are dropped. Tag refs always pass through. `*` matches a single path segment, so `release/*` matches `release/v1` but not `release/v1/hotfix`. Example: `BRANCH_FILTER=main,develop,release/*`. Other event types (issues, pull requests, comments, …) are unaffected.
 
 **Multi-webhook routing** — Optional. Declare additional Discord webhooks with the `DISCORD_WEBHOOK_<NAME>` prefix (e.g. `DISCORD_WEBHOOK_RELEASES`, `DISCORD_WEBHOOK_CI`), then set `ROUTES` to a comma-separated list of `event:NAME` pairs. The GitHub event name is matched against each rule from left to right; the first match wins. Events with no matching rule (and the case where `ROUTES` is unset) fall back to `DISCORD_WEBHOOK_URL`. Example: `ROUTES=release:RELEASES,workflow_run:CI,issues:ISSUES,issue_comment:ISSUES` sends releases to a dedicated channel, CI runs to another, issues and issue comments to a third, and everything else (push, pull_request, star, fork, …) to the default webhook.
+
+**Locale** — Optional. Default `en`. Switches the language of the static strings ghook renders into Discord messages (titles, field labels, statuses). Supported values: `en`, `fr`. Tags like `fr-FR` are normalized to `fr`; unknown locales fall back to `en`. User-authored content — commit messages, issue/PR titles, release notes, comment bodies — is always passed through unchanged. To add a language, drop a `src/i18n/<code>.json` file with the same keys as `en.json` and register it in `src/i18n/index.js`.
 
 ---
 

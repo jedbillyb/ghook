@@ -1,5 +1,6 @@
 const { send } = require("../discord");
 const { bufferEvent } = require("../utils/buffer");
+const { t } = require("../i18n");
 
 function handlePush(payload) {
   const { repository, ref, commits } = payload;
@@ -39,22 +40,23 @@ function sendPushMessage(payload) {
   ).join("\n");
 
   if (remaining > 0) {
-    commitList += `\n*and ${remaining} more commit${remaining !== 1 ? "s" : ""}...*`;
+    commitList += `\n*${t("push.more", { count: remaining })}*`;
   }
 
+  const titleKey = isTag ? "push.title.tag" : "push.title.branch";
   send({
     author: {
       name: pusher.name || pusher.login,
       url: `https://github.com/${pusher.name || pusher.login}`,
       icon_url: sender ? sender.avatar_url : `https://github.com/${pusher.name || pusher.login}.png`,
     },
-    title: `Pushed ${commits.length} commit${commits.length !== 1 ? "s" : ""} to ${isTag ? "tag" : "branch"} \`${branch}\``,
-    description: commitList || "No commits.",
+    title: t(titleKey, { count: commits.length, ref: branch }),
+    description: commitList || t("push.noCommits"),
     url: compare,
     color: 0x238636,
     fields: [
-      { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
-      { name: isTag ? "Tag" : "Branch", value: `\`${branch}\``, inline: true },
+      { name: t("field.repository"), value: `[${repository.full_name}](${repository.html_url})`, inline: true },
+      { name: isTag ? t("field.tag") : t("field.branch"), value: `\`${branch}\``, inline: true },
     ],
   });
 }

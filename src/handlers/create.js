@@ -1,5 +1,6 @@
 const { send } = require("../discord");
 const { bufferEvent } = require("../utils/buffer");
+const { t } = require("../i18n");
 
 function handleCreate(payload) {
   const { ref_type, repository } = payload;
@@ -20,12 +21,12 @@ function sendCreateMessage(payload) {
       url: `https://github.com/${sender.login}`,
       icon_url: sender.avatar_url,
     },
-    title: `Created ${ref_type} \`${ref}\``,
+    title: t("create.title", { refType: t(`refType.${ref_type}`), ref }),
     url: `${repository.html_url}/tree/${ref}`,
     color: 0x1f6feb,
     fields: [
-      { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
-      { name: "Type", value: ref_type.charAt(0).toUpperCase() + ref_type.slice(1), inline: true },
+      { name: t("field.repository"), value: `[${repository.full_name}](${repository.html_url})`, inline: true },
+      { name: t("field.type"), value: t(`refTypeLabel.${ref_type}`), inline: true },
     ],
   });
 }
