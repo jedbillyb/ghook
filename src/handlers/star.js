@@ -1,4 +1,5 @@
 const { send } = require("../discord");
+const { t, activeLocale } = require("../i18n");
 
 function handleStar(payload) {
   if (payload.action !== "started") return;
@@ -14,9 +15,9 @@ function handleStar(payload) {
     url: repository.html_url,
     color: 0xe3b341,
     fields: [
-      { name: "Stars", value: repository.stargazers_count.toLocaleString(), inline: true },
-      { name: "Forks", value: repository.forks_count.toLocaleString(), inline: true },
-      { name: "Language", value: repository.language || "Unknown", inline: true },
+      { name: t("field.stars"), value: repository.stargazers_count.toLocaleString(activeLocale), inline: true },
+      { name: t("field.forks"), value: repository.forks_count.toLocaleString(activeLocale), inline: true },
+      { name: t("field.language"), value: repository.language || t("star.unknownLanguage"), inline: true },
     ],
   });
 }

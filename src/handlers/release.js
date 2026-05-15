@@ -1,5 +1,6 @@
 const { send } = require("../discord");
 const { bufferEvent, suppressEvent } = require("../utils/buffer");
+const { t } = require("../i18n");
 
 const ACTIONS = ["published", "released", "prereleased"];
 
@@ -20,9 +21,9 @@ function sendReleaseMessage(payload) {
   const { release, repository, sender } = payload;
   const isPrerelease = release.prerelease;
   const color = isPrerelease ? 0xe3b341 : 0x238636;
-  const label = isPrerelease ? "Pre-release" : "Release";
+  const label = isPrerelease ? t("release.type.prerelease") : t("release.type.release");
 
-  const seeMore = `\n\n[See more](${release.html_url})`;
+  const seeMore = `\n\n[${t("seeMore")}](${release.html_url})`;
   const description = (release.body || "").slice(0, 400) + seeMore;
 
   send({
@@ -36,9 +37,9 @@ function sendReleaseMessage(payload) {
     url: release.html_url,
     color,
     fields: [
-      { name: "Repository", value: `[${repository.full_name}](${repository.html_url})`, inline: true },
-      { name: "Tag", value: `\`${release.tag_name}\``, inline: true },
-      { name: "Type", value: label, inline: true },
+      { name: t("field.repository"), value: `[${repository.full_name}](${repository.html_url})`, inline: true },
+      { name: t("field.tag"), value: `\`${release.tag_name}\``, inline: true },
+      { name: t("field.type"), value: label, inline: true },
     ],
   });
 }

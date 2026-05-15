@@ -1,0 +1,63 @@
+{
+  "push.title.branch.one": "Pushed {count} commit to branch `{ref}`",
+  "push.title.branch.other": "Pushed {count} commits to branch `{ref}`",
+  "push.title.tag.one": "Pushed {count} commit to tag `{ref}`",
+  "push.title.tag.other": "Pushed {count} commits to tag `{ref}`",
+  "push.more.one": "and {count} more commit...",
+  "push.more.other": "and {count} more commits...",
+  "push.noCommits": "No commits.",
+
+  "create.title": "Created {refType} `{ref}`",
+  "delete.title": "Deleted {refType} `{ref}`",
+  "refType.branch": "branch",
+  "refType.tag": "tag",
+  "refTypeLabel.branch": "Branch",
+  "refTypeLabel.tag": "Tag",
+
+  "pr.title": "#{number} {title}",
+  "pr.status.opened": "Opened",
+  "pr.status.closed": "Closed",
+  "pr.status.merged": "Merged",
+  "pr.status.reopened": "Reopened",
+
+  "issue.title": "Issue #{number}: {title}",
+  "issue.status.opened": "Opened",
+  "issue.status.closed": "Closed",
+  "issue.status.reopened": "Reopened",
+  "issue.status.edited": "Edited",
+  "issue.type": "Issue",
+
+  "issueComment.title": "Commented on #{number}: {title}",
+
+  "release.type.release": "Release",
+  "release.type.prerelease": "Pre-release",
+
+  "workflow.title": "{name}: {label}",
+  "workflow.conclusion.success": "Succeeded",
+  "workflow.conclusion.failure": "Failed",
+  "workflow.conclusion.cancelled": "Cancelled",
+  "workflow.conclusion.timed_out": "Timed out",
+  "workflow.conclusion.action_required": "Action required",
+  "workflow.branchLabel": "Branch `{branch}`",
+  "workflow.unknownEvent": "unknown",
+
+  "fork.title": "Forked {repo}",
+  "fork.description": "Created [{repo}]({url})",
+
+  "star.unknownLanguage": "Unknown",
+
+  "seeMore": "See more",
+
+  "field.repository": "Repository",
+  "field.branch": "Branch",
+  "field.tag": "Tag",
+  "field.type": "Type",
+  "field.status": "Status",
+  "field.workflow": "Workflow",
+  "field.event": "Event",
+  "field.stars": "Stars",
+  "field.forks": "Forks",
+  "field.language": "Language",
+  "field.totalForks": "Total Forks",
+  "field.original": "Original"
+}
