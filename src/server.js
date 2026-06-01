@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const { verifySignature } = require("./verify");
 const { routeEvent } = require("./router");
+const { startPoller } = require("./poller");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,4 +31,7 @@ app.post("/webhook", (req, res) => {
   res.status(200).send("OK");
 });
 
-app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Listening on port ${PORT}`);
+  startPoller();
+});
