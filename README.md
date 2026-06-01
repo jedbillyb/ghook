@@ -1,134 +1,58 @@
-<p align="right"><a href="https://jedbillyb.com"><img src="https://img.shields.io/badge/jedbillyb.com-000?style=for-the-badge&logo=archlinux&logoColor=blue" /></a></p>
-<div align="center">
-
-<img src="assets/android-chrome-512x512-g.png" width="128" alt="ghook" />
-
 # ghook
 
-**GitHub → Discord webhook bridge. One setup, every repo, forever.**
+> GitHub -> Discord webhook bridge. One setup, every repo, forever.
 
 [![CI](https://github.com/jedbillyb/ghook/actions/workflows/ci.yml/badge.svg)](https://github.com/jedbillyb/ghook/actions/workflows/ci.yml)
-[![Live](https://img.shields.io/badge/deployed-live-brightgreen?style=flat-square)](https://github.com/jedbillyb/ghook)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](./LICENSE)
 [![Node](https://img.shields.io/badge/Node.js-20+-339933?style=flat-square&logo=node.js)](https://nodejs.org)
-[![Express](https://img.shields.io/badge/Express.js-4-000000?style=flat-square&logo=express)](https://expressjs.com)
 
-</div>
-
----
-
-A production-ready Node.js app that delivers rich, color-coded Discord embeds for every GitHub event. Uses GitHub Apps for account-level installation — one setup covers all current and future repositories automatically.
-
-## Table of Contents
-
-- [Features](#features)
-- [How It Works](#how-it-works)
-- [Architecture](#architecture)
-- [Supported Events](#supported-events)
-- [Prerequisites](#prerequisites)
-- [GitHub App Setup](#github-app-setup)
-- [Installation & Setup](#installation--setup)
-- [Configuration](#configuration)
-- [Deployment](#deployment)
-- [Testing](#testing)
-- [Troubleshooting](#troubleshooting)
-- [Security](#security)
-- [Contributing](#contributing)
-- [License](#license)
+A Node.js app that delivers rich, color-coded Discord embeds for every GitHub event. Install once via a GitHub App and it covers all your repos automatically — including future ones. Also polls public repos, orgs, and users you don't own.
 
 ---
 
 ## Features
 
-- **Global repository coverage** — Install once, cover all repos including future ones
-- **Rich Discord embeds** — Color-coded notifications with avatars, links, and context
-- **HMAC-SHA256 verification** — Every webhook payload is verified before processing
-- **Event-driven handlers** — Dedicated, modular handler per event type
-- **Minimal dependencies** — Express.js and Node.js stdlib only
-- **Production ready** — systemd service, env config, and deployment scripts included
-- **Comprehensive logging** — Detailed output for monitoring and debugging
+- **Global repo coverage** - one GitHub App install covers all current and future repos
+- **Public repo polling** - watch any public repo, org, or user without them installing anything
+- **Rich Discord embeds** - color-coded notifications with avatars, links, and context
+- **HMAC-SHA256 verification** - every webhook payload verified before processing
+- **Per-target event filters** - route different events to different Discord channels
+- **Minimal dependencies** - Express.js and Node.js stdlib only
 
 ---
 
 ## How It Works
 
-### Webhook Flow
+1. **GitHub Event** - an event occurs (push, issue, star, etc.) in any monitored repo
+2. **Webhook Delivery** - GitHub POSTs the payload to your configured webhook URL
+3. **Signature Verification** - server checks the HMAC-SHA256 signature against your secret
+4. **Event Routing** - payload is dispatched to the correct handler via `X-GitHub-Event`
+5. **Discord Notification** - handler formats the event into an embed and posts to Discord
 
-1. **GitHub Event** — An event occurs (push, issue, star, etc.) in any monitored repo
-2. **Webhook Delivery** — GitHub POSTs the payload to your configured webhook URL
-3. **Signature Verification** — Server checks the HMAC-SHA256 signature against your secret
-4. **Event Routing** — Payload is dispatched to the correct handler via `X-GitHub-Event`
-5. **Discord Notification** — Handler formats the event into an embed and sends it to Discord
+For public repos you don't control, ghook polls GitHub's Events API on a configurable interval instead.
 
-### GitHub Apps vs Repository Webhooks
+### GitHub Apps vs repository webhooks
 
-GitHub Apps give you account-level installation — unlike per-repo webhooks, they:
-
-- Cover all repositories from a single installation
-- Automatically include new repos without extra configuration
-- Offer fine-grained, auditable permissions
-- Use webhook secrets for authentication (no private key download needed)
-
----
-
-## Architecture
-
-### Project Structure
-
-```
-ghook/
-├── src/
-│   ├── server.js           # Express server and webhook endpoint
-│   ├── verify.js           # HMAC-SHA256 signature verification
-│   ├── discord.js          # Discord webhook HTTP client
-│   ├── router.js           # Event routing logic
-│   └── handlers/
-│       ├── push.js         # Git push events
-│       ├── create.js       # Branch/tag creation
-│       ├── delete.js       # Branch/tag deletion
-│       ├── star.js         # Repository starring
-│       ├── fork.js         # Repository forking
-│       ├── pullRequest.js  # Pull request lifecycle
-│       ├── issues.js       # Issue events
-│       ├── issueComment.js # Issue comment events
-│       ├── release.js      # Release events
-│       └── workflowRun.js  # GitHub Actions run events
-├── github-discord-bot.service  # systemd unit file
-├── package.json
-├── .env.example
-└── README.md
-```
-
-### Core Components
-
-**`server.js`** — Express app on configurable port (default `3000`). Raw body parsing for signature validation, health check at `/`, webhook endpoint at `/webhook`.
-
-**`verify.js`** — HMAC-SHA256 verification using Node.js crypto. Timing-safe comparison prevents timing attacks.
-
-**`discord.js`** — HTTPS client for the Discord webhook API. Sends rich embed payloads as JSON with error handling.
-
-**`router.js`** — Maps `X-GitHub-Event` headers to handler functions. Logs unhandled events for visibility.
-
-**Event Handlers** — Each handler extracts payload data and produces a Discord embed with author avatar, color coding, repo context, links, and timestamps.
+GitHub Apps give you account-level installation - unlike per-repo webhooks, a single install covers all repos, includes new ones automatically, and uses webhook secrets for auth (no private key needed).
 
 ---
 
 ## Supported Events
 
-| Event | Handler | Description | Color |
-|---|---|---|---|
-| `push` | `handlePush` | Commits pushed to a branch | Green `#238636` |
-| `create` | `handleCreate` | Branch or tag created | Blue `#1f6feb` |
-| `delete` | `handleDelete` | Branch or tag deleted | Red `#f85149` |
-| `watch` | `handleStar` | Repository starred | Yellow `#e3b341` |
-| `fork` | `handleFork` | Repository forked | Purple `#a371f7` |
-| `pull_request` | `handlePullRequest` | PR opened, closed, merged | Blue `#58a6ff` |
-| `issues` | `handleIssues` | Issue opened, closed, reopened | Green/Red/Orange |
-| `issue_comment` | `handleIssueComment` | Comment on an issue | Blue `#58a6ff` |
-| `release` | `handleRelease` | Release published or prereleased | Green `#238636` |
-| `workflow_run` | `handleWorkflowRun` | GitHub Actions run completed | Green/Red/Grey/Orange |
+| Event | Description | Color |
+|---|---|---|
+| `push` | Commits pushed to a branch | Green `#238636` |
+| `create` | Branch or tag created | Blue `#1f6feb` |
+| `delete` | Branch or tag deleted | Red `#f85149` |
+| `watch` | Repository starred | Yellow `#e3b341` |
+| `fork` | Repository forked | Purple `#a371f7` |
+| `pull_request` | PR opened, closed, merged | Blue `#58a6ff` |
+| `issues` | Issue opened, closed, reopened | Green/Red/Orange |
+| `issue_comment` | Comment on an issue | Blue `#58a6ff` |
+| `release` | Release published or prereleased | Green `#238636` |
+| `workflow_run` | GitHub Actions run completed | Green/Red/Grey/Orange |
 
-### Example Embed Formats
+### Example embed formats
 
 <details>
 <summary><strong>Push event</strong></summary>
@@ -143,21 +67,6 @@ Pushed 3 commits to `main`
 
 Repository: owner/repo
 Branch: `main`
-
-ghook • [timestamp]
-```
-
-</details>
-
-<details>
-<summary><strong>Delete event</strong></summary>
-
-```
-[User Avatar] User Name
-Deleted branch `feature-x`
-
-Repository: owner/repo
-Type: Branch
 
 ghook • [timestamp]
 ```
@@ -202,72 +111,25 @@ ghook • [timestamp]
 
 ---
 
-## Prerequisites
-
-### System Requirements
-
-- **Node.js** 16+ (tested on 20.x)
-- **OS** Linux (Ubuntu 20.04+ recommended), macOS, or Windows
-- **RAM** 128 MB minimum, 256 MB recommended
-- **Disk** ~50 MB for install + logs
-
-### Accounts & Permissions
-
-- GitHub account with repository creation permissions
-- Discord server with "Manage Webhooks" permission in the target channel
-- VPS or server for production deployment (optional for local dev)
-
-### Network
-
-- Inbound on port `3000` (configurable) for webhook delivery
-- Outbound HTTPS to `discord.com`
-- Optional: TLS certificate for a secure webhook URL
-
----
-
 ## GitHub App Setup
 
-### Creating the App
+1. Go to [GitHub Settings -> Developer settings -> GitHub Apps](https://github.com/settings/apps) and click **New GitHub App**
+2. Set a name, homepage URL, and configure the webhook URL (`https://yourdomain.com/webhook`) and secret
+3. Set repository permissions: `Actions` Read, `Contents` Read, `Issues` Read, `Metadata` Read, `Pull requests` Read
+4. Subscribe to events: Push, Create, Delete, Fork, Issues, Issue comment, Pull request, Release, Watch, Workflow run
+5. After creating: **Install App** -> install on your account -> **All repositories**
 
-1. Go to [GitHub Settings → Developer settings → GitHub Apps](https://github.com/settings/apps) and click **New GitHub App**
-
-2. Fill in basic info:
-   - **Name**: `ghook` (or your preference)
-   - **Homepage URL**: your repo or personal site
-
-3. Set **Repository permissions**:
-   - `Actions` → Read-only *(for workflow run notifications)*
-   - `Contents` → Read-only
-   - `Issues` → Read-only
-   - `Metadata` → Read-only *(required)*
-   - `Pull requests` → Read-only
-
-4. Subscribe to **events**:
-   - ✅ Push, Create, Delete, Fork, Issues, Issue comment, Pull request, Release, Watch, Workflow run
-
-5. Configure the **webhook**:
-   - **URL**: `https://yourdomain.com/webhook`
-   - **Secret**: a strong random string — this becomes `GITHUB_WEBHOOK_SECRET` in `.env`
-   - **SSL verification**: enabled
-
-6. After creating, go to **Install App** → install on your account → select repositories or **All repositories**
-
-### Required Permissions Summary
-
-| Permission | Access | Required For |
-|---|---|---|
-| `Contents` | Read | Release events, repo metadata |
-| `Issues` | Read | Issue and comment events |
-| `Metadata` | Read | Repository info *(always required)* |
-| `Pull requests` | Read | Pull request events |
-
-> No private key download needed — authentication is handled via webhook secrets.
+| Permission | Required for |
+|---|---|
+| `Metadata` | Always required |
+| `Contents` | Release events, repo metadata |
+| `Issues` | Issue and comment events |
+| `Pull requests` | Pull request events |
+| `Actions` | Workflow run events |
 
 ---
 
-## Installation & Setup
-
-### Local Development
+## Installation
 
 ```bash
 git clone https://github.com/jedbillyb/ghook.git
@@ -275,118 +137,79 @@ cd ghook
 npm install
 cp .env.example .env
 # Edit .env with your values
-npm run dev   # Auto-restarts on file changes
+npm run dev   # auto-restarts on file changes
 ```
 
 Verify it's running:
 
 ```bash
 curl http://localhost:3000
-# → "GitHub → Discord bot is running."
+# -> "GitHub -> Discord bot is running."
 ```
 
-### Production Setup (Ubuntu/Debian)
-
-**Automated:**
-
-```bash
-wget https://raw.githubusercontent.com/jedbillyb/ghook/main/setup.sh
-chmod +x setup.sh
-sudo ./setup.sh
-```
-
-**Manual:**
-
-```bash
-# 1. Install Node.js 20
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
-sudo apt-get install -y nodejs
-
-# 2. Create app directory
-sudo mkdir -p /opt/ghook
-sudo chown $USER:$USER /opt/ghook
-
-# 3. Upload and install
-scp -r ./ghook root@YOUR_VPS_IP:/opt/
-cd /opt/ghook
-npm install --production
-
-# 4. Configure
-cp .env.example .env
-nano .env
-```
+**Note:** keep your `.env` out of version control and restrict permissions with `chmod 600 .env`.
 
 ---
 
 ## Configuration
 
-Create a `.env` file in the project root:
-
 ```env
-# Discord
+# Required
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN
-
-# GitHub
 GITHUB_WEBHOOK_SECRET=your_strong_random_secret_here
 
-# Server
+# Optional
 PORT=3000
-
-# Privacy
 NOTIFY_PRIVATE_REPOS=false
+DISCORD_LEGACY_EMBEDS=false
+WEBHOOK_FOOTER=github.com/jedbillyb/ghook
+WEBHOOK_FOOTER_URL=https://github.com/jedbillyb/ghook
+IGNORED_EVENTS=watch,fork
+BRANCH_FILTER=main,develop,release/*
+LOCALE=en
 
-# Discord rendering (optional)
-# DISCORD_LEGACY_EMBEDS=true       # set to fall back to classic embeds
-# WEBHOOK_FOOTER=github.com/jedbillyb/ghook
-# WEBHOOK_FOOTER_URL=https://github.com/jedbillyb/ghook
+# Multi-webhook routing
+DISCORD_WEBHOOK_RELEASES=https://discord.com/api/webhooks/.../...
+DISCORD_WEBHOOK_CI=https://discord.com/api/webhooks/.../...
+ROUTES=release:RELEASES,workflow_run:CI
 
-# Event filters (optional)
-# IGNORED_EVENTS=watch,fork
-# BRANCH_FILTER=main,develop,release/*
-
-# Multi-webhook routing (optional)
-# DISCORD_WEBHOOK_RELEASES=https://discord.com/api/webhooks/.../...
-# DISCORD_WEBHOOK_CI=https://discord.com/api/webhooks/.../...
-# ROUTES=release:RELEASES,workflow_run:CI
-
-# Localization (optional)
-# LOCALE=fr
+# Polling - watch public repos/orgs/users (no install required on their side)
+WATCH_REPOS=torvalds/linux:release,push;vercel/next.js
+WATCH_ORGS=vercel:release
+WATCH_USERS=gaearon
+POLL_INTERVAL=60000
+GITHUB_TOKEN=ghp_xxxx
 ```
 
-**Discord webhook URL** — Discord → Server Settings → Integrations → Webhooks → create or copy.
-
-**Webhook secret** — 32+ character random string. Must match exactly in GitHub App settings.
-
-**Port** — Default `3000`. Change if occupied, and ensure your firewall allows inbound connections.
-
-**Notify private repos** — Default `false`. Private repository events are skipped to avoid leaking activity from private work into a public channel. Set to `true` to opt in.
-
-**Discord legacy embeds** — Default `false`. Messages are rendered using Discord's Components V2 format. Set to `true` to fall back to the classic embed rendering. Components V2 is still server-gated by Discord: if your webhook's server hasn't been granted access, V2 messages fail silently — set `DISCORD_LEGACY_EMBEDS=true` until access is rolled out.
-
-**Webhook footer** — Default `github.com/jedbillyb/ghook`. Override the small attribution text shown at the bottom of each message (useful when self-hosting). Pair with `WEBHOOK_FOOTER_URL` to change the link target in Components V2 mode (defaults to `https://github.com/jedbillyb/ghook`).
-
-**Ignored events** — Optional. Comma-separated list of GitHub event names that should be dropped before reaching their handler (e.g. `IGNORED_EVENTS=watch,fork` to silence stars and forks).
-
-**Branch filter** — Optional. Comma-separated list of branch name patterns. When set, `push`, `create`, and `delete` events whose branch does not match any pattern are dropped. Tag refs always pass through. `*` matches a single path segment, so `release/*` matches `release/v1` but not `release/v1/hotfix`. Example: `BRANCH_FILTER=main,develop,release/*`. Other event types (issues, pull requests, comments, …) are unaffected.
-
-**Multi-webhook routing** — Optional. Declare additional Discord webhooks with the `DISCORD_WEBHOOK_<NAME>` prefix (e.g. `DISCORD_WEBHOOK_RELEASES`, `DISCORD_WEBHOOK_CI`), then set `ROUTES` to a comma-separated list of `event:NAME` pairs. The GitHub event name is matched against each rule from left to right; the first match wins. Events with no matching rule (and the case where `ROUTES` is unset) fall back to `DISCORD_WEBHOOK_URL`. Example: `ROUTES=release:RELEASES,workflow_run:CI,issues:ISSUES,issue_comment:ISSUES` sends releases to a dedicated channel, CI runs to another, issues and issue comments to a third, and everything else (push, pull_request, star, fork, …) to the default webhook.
-
-**Locale** — Optional. Default `en`. Switches the language of the static strings ghook renders into Discord messages (titles, field labels, statuses). Supported values: `en`, `fr`. Tags like `fr-FR` are normalized to `fr`; unknown locales fall back to `en`. User-authored content — commit messages, issue/PR titles, release notes, comment bodies — is always passed through unchanged. To add a language, drop a `src/i18n/<code>.json` file with the same keys as `en.json` and register it in `src/i18n/index.js`.
+| Variable | Default | Description |
+|---|---|---|
+| `DISCORD_WEBHOOK_URL` | - | Primary Discord webhook URL |
+| `GITHUB_WEBHOOK_SECRET` | - | HMAC secret set in your GitHub App |
+| `PORT` | `3000` | Port the server listens on |
+| `NOTIFY_PRIVATE_REPOS` | `false` | Forward events from private repos |
+| `DISCORD_LEGACY_EMBEDS` | `false` | Fall back to classic embeds instead of Components V2 |
+| `WEBHOOK_FOOTER` | `github.com/jedbillyb/ghook` | Footer text on each message |
+| `WEBHOOK_FOOTER_URL` | ghook repo URL | Footer link target (Components V2 only) |
+| `IGNORED_EVENTS` | - | Comma-separated event names to drop (e.g. `watch,fork`) |
+| `BRANCH_FILTER` | - | Comma-separated branch patterns for push/create/delete. `*` matches one segment |
+| `ROUTES` | - | Map events to named webhooks: `release:RELEASES,workflow_run:CI` |
+| `LOCALE` | `en` | Message language. Supported: `en`, `fr` |
+| `WATCH_REPOS` | - | Public repos to poll. `;` separates targets, `:events` filters by event type |
+| `WATCH_ORGS` | - | Public orgs to poll. Same syntax as `WATCH_REPOS` |
+| `WATCH_USERS` | - | Public users to poll. Same syntax as `WATCH_REPOS` |
+| `POLL_INTERVAL` | `60000` | Polling interval in ms |
+| `GITHUB_TOKEN` | - | PAT for GitHub API auth - raises rate limit from 60 to 5000 req/hr |
 
 ---
 
 ## Deployment
 
-### systemd Service
+### systemd
 
 ```bash
 sudo cp /opt/ghook/github-discord-bot.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable github-discord-bot
-sudo systemctl start github-discord-bot
-
-# Monitor
-sudo systemctl status github-discord-bot
+sudo systemctl enable --now github-discord-bot
 sudo journalctl -u github-discord-bot -f
 ```
 
@@ -407,24 +230,15 @@ docker build -t ghook .
 docker run -p 3000:3000 --env-file .env ghook
 ```
 
-### Reverse Proxy
+### Reverse proxy
 
 <details>
-<summary><strong>Caddy (recommended — auto HTTPS)</strong></summary>
+<summary><strong>Caddy (recommended - auto HTTPS)</strong></summary>
 
-```bash
-sudo apt install -y caddy
-```
-
-`/etc/caddy/Caddyfile`:
 ```
 yourdomain.com {
     reverse_proxy localhost:3000
 }
-```
-
-```bash
-sudo systemctl restart caddy
 ```
 
 </details>
@@ -436,7 +250,6 @@ sudo systemctl restart caddy
 server {
     listen 80;
     server_name yourdomain.com;
-
     location / {
         proxy_pass http://localhost:3000;
         proxy_set_header Host $host;
@@ -451,152 +264,51 @@ server {
 
 ## Testing
 
-### Unit tests
-
-Unit tests run on Node's built-in test runner — no extra dependencies required.
-
 ```bash
 npm test
 ```
 
-Covers signature verification, the Components V2 / legacy embed builders, the Discord routing logic, and the push-batching utility. Every PR is also exercised by the GitHub Actions workflow at [`.github/workflows/ci.yml`](.github/workflows/ci.yml) against Node 20 and 22.
-
-### Health & Webhook Endpoints
+93 unit tests covering signature verification, Components V2 and legacy embed builders, Discord routing, event filtering, push batching, and the polling pipeline. CI runs on Node 20 and 22 against every PR and push to main.
 
 ```bash
 # Health check
 curl http://localhost:3000
 
-# Simulate a webhook (signature will fail — expected)
+# Simulate a webhook (signature will fail - expected)
 curl -X POST http://localhost:3000/webhook \
   -H "Content-Type: application/json" \
   -H "X-GitHub-Event: push" \
-  -H "X-Hub-Signature-256: sha256=fake_signature" \
+  -H "X-Hub-Signature-256: sha256=fake" \
   -d '{"repository":{"full_name":"test/repo"},"commits":[]}'
-```
-
-### Local Tunnel (for real GitHub events)
-
-```bash
-npm install -g ngrok
-ngrok http 3000
-# Use the ngrok URL as your GitHub App webhook URL
-```
-
-### Discord Webhook
-
-```bash
-curl -H "Content-Type: application/json" \
-  -d '{"content": "Test notification from ghook"}' \
-  YOUR_DISCORD_WEBHOOK_URL
 ```
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
-
 **`Invalid signature - rejected`**
-- `GITHUB_WEBHOOK_SECRET` in `.env` doesn't match GitHub App settings
-- Check for leading/trailing spaces — must be an exact match
+`GITHUB_WEBHOOK_SECRET` doesn't match what's set in your GitHub App. Check for leading/trailing spaces.
 
 **`Discord API error: 401`**
-- Discord webhook URL is invalid or was deleted
-- Regenerate in Discord → Server Settings → Integrations → Webhooks
+Discord webhook URL is invalid or deleted. Regenerate it in Discord -> Server Settings -> Integrations -> Webhooks.
 
 **`Address already in use`**
-- Port `3000` is taken by another process
-- Change `PORT` in `.env` or find the conflict: `sudo lsof -i :3000`
-
-**Service won't start**
-```bash
-sudo systemctl status github-discord-bot
-sudo journalctl -u github-discord-bot -n 50
-```
+Port `3000` is taken. Change `PORT` in `.env` or find the conflict: `sudo lsof -i :3000`.
 
 **No Discord notifications**
-1. Check service is running: `sudo systemctl status github-discord-bot`
-2. Tail logs: `sudo journalctl -u github-discord-bot -f`
-3. Test Discord webhook manually with curl
-4. Check GitHub App → webhook delivery history for errors
+Check the service is running (`sudo systemctl status github-discord-bot`), tail logs (`sudo journalctl -u github-discord-bot -f`), and check GitHub App -> webhook delivery history for errors.
 
-### Firewall
-
-```bash
-sudo ufw allow 3000
-sudo ufw status
-```
-
-### Log Commands
-
-```bash
-sudo journalctl -u github-discord-bot -n 100        # Recent logs
-sudo journalctl -u github-discord-bot -f            # Live tail
-sudo journalctl -u github-discord-bot --since "1 hour ago"
-```
-
-### Debug Logging
-
-In `server.js`, add verbose output for incoming events:
-
-```javascript
-console.log(`📥 Received event: ${event}`, JSON.stringify(req.body, null, 2));
-```
-
----
-
-## Security
-
-### Webhook Verification
-
-- HMAC-SHA256 signatures prevent spoofed deliveries
-- Timing-safe comparison eliminates timing oracle attacks
-- Raw body verification ensures payload integrity before parsing
-
-### Best Practices
-
-- Use a strong, unique webhook secret (32+ characters)
-- Never commit `.env` to version control — it's in `.gitignore`
-- Use HTTPS in production (Caddy handles this automatically)
-- Rotate webhook secrets periodically
-- Restrict `.env` permissions: `chmod 600 .env`
-- Monitor logs for unexpected event patterns
+**Components V2 messages failing silently**
+Discord's Components V2 is still server-gated. Set `DISCORD_LEGACY_EMBEDS=true` until your server has access.
 
 ---
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-handler`
-3. Implement changes following existing code patterns
-4. Test with sample webhook payloads
-5. Submit a pull request with a description and screenshots
-
-### Adding a New Event Handler
-
-1. Create `src/handlers/newEvent.js`
-2. Implement the handler following existing patterns
-3. Register it in `router.js`
-4. Update GitHub App permissions if the new event requires them
-5. Test with a real or simulated payload
-
-### Code Standards
-
-- ES6+ syntax throughout
-- Follow existing naming conventions
-- JSDoc comments on all exported functions
-- Graceful error handling — never crash on a bad payload
-- Keep dependencies minimal
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE) for details.
+Pull requests are welcome. Keep changes focused - one fix or feature per PR. If you're adding a new event handler, follow the pattern in `src/handlers/` and register it in `router.js`.
 
 ---
 
 <div align="center">
-<sub>MIT © <a href="https://github.com/jedbillyb">jedbillyb</a> · Made with ❤️</sub>
+<sub><a href="LICENSE">MIT</a> © <a href="https://github.com/jedbillyb">jedbillyb</a> · Made with ❤️</sub>
 </div>
