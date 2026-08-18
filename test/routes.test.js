@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const https = require("node:https");
 
-const { buildResolver, parseRoutes, loadWebhooks } = require("../src/routes");
+const { buildResolver, parseRoutes, parsePathRoutes, collectPaths, loadWebhooks } = require("../src/routes");
 
 const DEFAULT_URL = "https://discord.example/api/webhooks/0/default";
 const RELEASES_URL = "https://discord.example/api/webhooks/1/releases";
@@ -172,4 +172,160 @@ test("interleaved async sends resolve to the right webhook for each event", asyn
   assert.ok(releaseCall, "expected a call carrying the release payload");
   assert.match(workflowCall.opts.path, /\/api\/webhooks\/2\/ci/);
   assert.match(releaseCall.opts.path, /\/api\/webhooks\/1\/releases/);
+});
+
+const API_URL = "https://discord.example/api/webhooks/3/api";
+const WEB_URL = "https://discord.example/api/webhooks/4/web";
+
+function pushPayload(...files) {
+  return { commits: [{ added: [], modified: files, removed: [] }] };
+}
+
+test("parsePathRoutes parses pattern:target pairs and trims whitespace", () => {
+  assert.deepEqual(
+    parsePathRoutes(" packages/api/** : API , packages/web/** : WEB "),
+    [
+      { pattern: "packages/api/**", target: "API" },
+      { pattern: "packages/web/**", target: "WEB" },
+    ]
+  );
+});
+
+test("parsePathRoutes drops malformed entries", () => {
+  assert.deepEqual(parsePathRoutes("packages/api/**,web/**:,:API,docs/**:DOCS"), [
+    { pattern: "docs/**", target: "DOCS" },
+  ]);
+});
+
+test("collectPaths gathers added, modified and removed across commits", () => {
+  const payload = {
+    commits: [
+      { added: ["a.js"], modified: ["b.js"], removed: ["c.js"] },
+      { modified: ["d.js"] },
+    ],
+  };
+  assert.deepEqual(collectPaths(payload), ["a.js", "b.js", "c.js", "d.js"]);
+});
+
+test("collectPaths returns [] when the payload carries no commits", () => {
+  assert.deepEqual(collectPaths(undefined), []);
+  assert.deepEqual(collectPaths({}), []);
+  assert.deepEqual(collectPaths({ commits: [] }), []);
+});
+
+test("resolve routes a push by the path of a changed file", () => {
+  const { resolve } = buildResolver({
+    DISCORD_WEBHOOK_URL: DEFAULT_URL,
+    DISCORD_WEBHOOK_API: API_URL,
+    DISCORD_WEBHOOK_WEB: WEB_URL,
+    PATH_ROUTES: "packages/api/**:API,packages/web/**:WEB",
+  });
+  assert.equal(resolve("push", pushPayload("packages/web/src/index.ts")), WEB_URL);
+  assert.equal(resolve("push", pushPayload("packages/api/src/server.ts")), API_URL);
+});
+
+test("resolve enforces first-match-wins across path rules", () => {
+  const { resolve } = buildResolver({
+    DISCORD_WEBHOOK_URL: DEFAULT_URL,
+    DISCORD_WEBHOOK_API: API_URL,
+    DISCORD_WEBHOOK_WEB: WEB_URL,
+    PATH_ROUTES: "packages/api/**:API,packages/web/**:WEB",
+  });
+  const payload = pushPayload("packages/web/a.ts", "packages/api/b.ts");
+  assert.equal(resolve("push", payload), API_URL);
+});
+
+test("resolve falls back to default when no path rule matches", () => {
+  const { resolve } = buildResolver({
+    DISCORD_WEBHOOK_URL: DEFAULT_URL,
+    DISCORD_WEBHOOK_API: API_URL,
+    PATH_ROUTES: "packages/api/**:API",
+  });
+  assert.equal(resolve("push", pushPayload("docs/readme.md")), DEFAULT_URL);
+});
+
+test("PATH_ROUTES takes precedence over ROUTES for the same event", () => {
+  const { resolve } = buildResolver({
+    DISCORD_WEBHOOK_URL: DEFAULT_URL,
+    DISCORD_WEBHOOK_API: API_URL,
+    DISCORD_WEBHOOK_CI: CI_URL,
+    ROUTES: "push:CI",
+    PATH_ROUTES: "packages/api/**:API",
+  });
+  assert.equal(resolve("push", pushPayload("packages/api/a.ts")), API_URL);
+  assert.equal(resolve("push", pushPayload("docs/readme.md")), CI_URL);
+});
+
+test("resolve ignores path rules when the event carries no commits", () => {
+  const { resolve } = buildResolver({
+    DISCORD_WEBHOOK_URL: DEFAULT_URL,
+    DISCORD_WEBHOOK_API: API_URL,
+    PATH_ROUTES: "packages/api/**:API",
+  });
+  assert.equal(resolve("issues"), DEFAULT_URL);
+});
+
+test("single star matches one path segment, double star matches across segments", () => {
+  const { resolve } = buildResolver({
+    DISCORD_WEBHOOK_URL: DEFAULT_URL,
+    DISCORD_WEBHOOK_API: API_URL,
+    PATH_ROUTES: "src/*/index.ts:API",
+  });
+  assert.equal(resolve("push", pushPayload("src/api/index.ts")), API_URL);
+  assert.equal(resolve("push", pushPayload("src/api/deep/index.ts")), DEFAULT_URL);
+});
+
+test("resolve falls back to default when a path rule targets an unknown webhook", () => {
+  const { resolve } = buildResolver({
+    DISCORD_WEBHOOK_URL: DEFAULT_URL,
+    PATH_ROUTES: "packages/api/**:MISSING",
+  });
+  assert.equal(resolve("push", pushPayload("packages/api/a.ts")), DEFAULT_URL);
+});
+
+test("path rules apply to push only, not to other events carrying commits", () => {
+  const { resolve } = buildResolver({
+    DISCORD_WEBHOOK_URL: DEFAULT_URL,
+    DISCORD_WEBHOOK_API: API_URL,
+    PATH_ROUTES: "packages/api/**:API",
+  });
+  const payload = pushPayload("packages/api/a.ts");
+  assert.equal(resolve("push", payload), API_URL);
+  assert.equal(resolve("workflow_run", payload), DEFAULT_URL);
+});
+
+test("PATH_ROUTES warns at startup when a polled target is configured", () => {
+  const warnings = [];
+  const original = console.warn;
+  console.warn = (msg) => warnings.push(String(msg));
+  try {
+    buildResolver({
+      DISCORD_WEBHOOK_URL: DEFAULT_URL,
+      DISCORD_WEBHOOK_API: API_URL,
+      PATH_ROUTES: "packages/api/**:API",
+      WATCH_REPOS: "torvalds/linux",
+    });
+  } finally {
+    console.warn = original;
+  }
+  assert.ok(
+    warnings.some((w) => w.includes("PATH_ROUTES has no effect on polled targets")),
+    "expected a startup warning about polled targets"
+  );
+});
+
+test("PATH_ROUTES stays quiet when no polled target is configured", () => {
+  const warnings = [];
+  const original = console.warn;
+  console.warn = (msg) => warnings.push(String(msg));
+  try {
+    buildResolver({
+      DISCORD_WEBHOOK_URL: DEFAULT_URL,
+      DISCORD_WEBHOOK_API: API_URL,
+      PATH_ROUTES: "packages/api/**:API",
+    });
+  } finally {
+    console.warn = original;
+  }
+  assert.equal(warnings.length, 0);
 });

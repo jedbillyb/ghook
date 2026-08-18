@@ -173,6 +173,7 @@ LOCALE=en
 DISCORD_WEBHOOK_RELEASES=https://discord.com/api/webhooks/.../...
 DISCORD_WEBHOOK_CI=https://discord.com/api/webhooks/.../...
 ROUTES=release:RELEASES,workflow_run:CI
+PATH_ROUTES=packages/api/**:API,packages/web/**:WEB
 
 # Polling - watch public repos/orgs/users (no install required on their side)
 WATCH_REPOS=torvalds/linux:release,push;vercel/next.js
@@ -194,12 +195,19 @@ GITHUB_TOKEN=ghp_xxxx
 | `IGNORED_EVENTS` | - | Comma-separated event names to drop (e.g. `watch,fork`) |
 | `BRANCH_FILTER` | - | Comma-separated branch patterns for push/create/delete. `*` matches one segment |
 | `ROUTES` | - | Map events to named webhooks: `release:RELEASES,workflow_run:CI` |
+| `PATH_ROUTES` | - | Route pushes by changed file path: `packages/api/**:API`. `*` matches one segment, `**` matches across segments. Checked before `ROUTES`. Webhook delivery only — see below |
 | `LOCALE` | `en` | Message language. Supported: `en`, `fr` |
 | `WATCH_REPOS` | - | Repos to poll. `;` separates targets, `:events` filters by event type. Private repos need a `GITHUB_TOKEN` with read access and `NOTIFY_PRIVATE_REPOS=true` |
 | `WATCH_ORGS` | - | Orgs to poll. Same syntax as `WATCH_REPOS` |
 | `WATCH_USERS` | - | Users to poll. Same syntax as `WATCH_REPOS`. Public events only |
 | `POLL_INTERVAL` | `60000` | Polling interval in ms |
 | `GITHUB_TOKEN` | - | PAT for GitHub API auth - raises rate limit from 60 to 5000 req/hr. Without it, one target at the default interval already sits at the unauthenticated ceiling |
+
+### PATH_ROUTES and polling
+
+`PATH_ROUTES` matches on the files a push touched, which only webhook payloads carry. The Events API behind `WATCH_REPOS`, `WATCH_ORGS` and `WATCH_USERS` returns `sha`, `author`, `message`, `distinct` and `url` for each commit and no file lists at all, so polled pushes cannot be matched on path and fall through to `ROUTES`. ghook warns at startup when `PATH_ROUTES` is set alongside a polled target.
+
+Two limits apply even with webhook delivery: GitHub caps the `commits` array at 20 entries and omits it on very large pushes, so a push above that size is routed on a partial file list or on none at all.
 
 ---
 
