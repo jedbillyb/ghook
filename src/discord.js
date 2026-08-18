@@ -28,46 +28,87 @@ function retryDelayMs(headers, rawBody) {
   return DEFAULT_RETRY_MS;
 }
 
-function post(url, body, { withComponents } = {}, attempt = 0) {
+const queues = new Map();
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    if (typeof timer.unref === "function") timer.unref();
+  });
+}
+
+function postOnce(url, body, { withComponents }) {
+  return new Promise((resolve) => {
+    const payload = JSON.stringify(body);
+    const parsed = new URL(url);
+    const search = new URLSearchParams(parsed.search);
+    if (withComponents) search.set("with_components", "true");
+
+    const options = {
+      hostname: parsed.hostname,
+      path: search.toString() ? `${parsed.pathname}?${search.toString()}` : parsed.pathname,
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) },
+    };
+
+    const req = https.request(options, (res) => {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        res.resume();
+        return resolve({ statusCode: res.statusCode });
+      }
+      let raw = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => { raw += chunk; });
+      res.on("end", () => resolve({
+        statusCode: res.statusCode,
+        statusMessage: res.statusMessage,
+        headers: res.headers || {},
+        raw,
+      }));
+    });
+    req.on("error", (e) => resolve({ error: e }));
+    req.write(payload);
+    req.end();
+  });
+}
+
+async function deliver(url, body, opts) {
+  for (let attempt = 0; ; attempt++) {
+    const res = await postOnce(url, body, opts);
+
+    if (res.error) {
+      console.error("Discord send error:", res.error.message);
+      return;
+    }
+    if (res.statusCode >= 200 && res.statusCode < 300) return;
+
+    if (res.statusCode === 429 && attempt < MAX_RETRIES) {
+      const delay = retryDelayMs(res.headers, res.raw);
+      console.warn(`Discord rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}).`);
+      await sleep(delay);
+      continue;
+    }
+
+    console.error(`Discord API error: ${res.statusCode} ${res.statusMessage || ""}`.trim());
+    if (res.raw) console.error("Discord response body:", res.raw);
+    return;
+  }
+}
+
+function post(url, body, { withComponents } = {}) {
   if (!url) {
     console.error("Discord send skipped: no webhook URL resolved.");
     return;
   }
-  const payload = JSON.stringify(body);
-  const parsed = new URL(url);
-  const search = new URLSearchParams(parsed.search);
-  if (withComponents) search.set("with_components", "true");
+  const pending = queues.get(url);
+  const next = pending
+    ? pending.then(() => deliver(url, body, { withComponents }))
+    : deliver(url, body, { withComponents });
 
-  const options = {
-    hostname: parsed.hostname,
-    path: search.toString() ? `${parsed.pathname}?${search.toString()}` : parsed.pathname,
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) },
-  };
-
-  const req = https.request(options, (res) => {
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      res.resume();
-      return;
-    }
-    let raw = "";
-    res.setEncoding("utf8");
-    res.on("data", (chunk) => { raw += chunk; });
-    res.on("end", () => {
-      if (res.statusCode === 429 && attempt < MAX_RETRIES) {
-        const delay = retryDelayMs(res.headers || {}, raw);
-        console.warn(`Discord rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}).`);
-        const timer = setTimeout(() => post(url, body, { withComponents }, attempt + 1), delay);
-        if (typeof timer.unref === "function") timer.unref();
-        return;
-      }
-      console.error(`Discord API error: ${res.statusCode} ${res.statusMessage || ""}`.trim());
-      if (raw) console.error("Discord response body:", raw);
-    });
+  queues.set(url, next);
+  next.catch(() => {}).then(() => {
+    if (queues.get(url) === next) queues.delete(url);
   });
-  req.on("error", (e) => console.error("Discord send error:", e.message));
-  req.write(payload);
-  req.end();
 }
 
 function specWithFooter(spec) {
