@@ -103,3 +103,37 @@ test("TYPE_MAP covers all supported event types", () => {
   const mapped = Object.values(TYPE_MAP);
   for (const e of expected) assert.ok(mapped.includes(e), `missing: ${e}`);
 });
+
+const { rateLimitPauseMs } = require("../src/poller");
+
+const NOW = 1_700_000_000_000;
+
+test("rateLimitPauseMs waits until reset when the quota is exhausted", () => {
+  const headers = {
+    "x-ratelimit-remaining": "0",
+    "x-ratelimit-reset": String(NOW / 1000 + 120),
+  };
+  assert.equal(rateLimitPauseMs(headers, NOW), 120_000);
+});
+
+test("rateLimitPauseMs does not pause while quota remains", () => {
+  const headers = {
+    "x-ratelimit-remaining": "17",
+    "x-ratelimit-reset": String(NOW / 1000 + 120),
+  };
+  assert.equal(rateLimitPauseMs(headers, NOW), 0);
+});
+
+test("rateLimitPauseMs clamps a reset already in the past", () => {
+  const headers = {
+    "x-ratelimit-remaining": "0",
+    "x-ratelimit-reset": String(NOW / 1000 - 30),
+  };
+  assert.equal(rateLimitPauseMs(headers, NOW), 0);
+});
+
+test("rateLimitPauseMs ignores responses without rate limit headers", () => {
+  assert.equal(rateLimitPauseMs(undefined, NOW), 0);
+  assert.equal(rateLimitPauseMs({}, NOW), 0);
+  assert.equal(rateLimitPauseMs({ "x-ratelimit-remaining": "0" }, NOW), 0);
+});
