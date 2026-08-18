@@ -188,8 +188,8 @@ GITHUB_TOKEN=ghp_xxxx
 | `PORT` | `3000` | Port the server listens on |
 | `NOTIFY_PRIVATE_REPOS` | `false` | Forward events from private repos |
 | `DISCORD_LEGACY_EMBEDS` | `false` | Fall back to classic embeds instead of Components V2 |
-| `WEBHOOK_FOOTER` | `github.com/jedbillyb/ghook` | Footer text on each message |
-| `WEBHOOK_FOOTER_URL` | ghook repo URL | Footer link target (Components V2 only) |
+| `WEBHOOK_FOOTER` | `github.com/jedbillyb/ghook` | Footer text on each message. Set empty to drop it and keep only the timestamp |
+| `WEBHOOK_FOOTER_URL` | ghook repo URL | Footer link target (Components V2 only). Set empty to render the text unlinked |
 | `IGNORED_EVENTS` | - | Comma-separated event names to drop (e.g. `watch,fork`) |
 | `BRANCH_FILTER` | - | Comma-separated branch patterns for push/create/delete. `*` matches one segment |
 | `ROUTES` | - | Map events to named webhooks: `release:RELEASES,workflow_run:CI` |
