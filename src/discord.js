@@ -3,7 +3,9 @@ const { buildContainer } = require("./components");
 const { buildResolver } = require("./routes");
 
 const LEGACY_EMBEDS = process.env.DISCORD_LEGACY_EMBEDS === "true";
-const FOOTER_TEXT = process.env.WEBHOOK_FOOTER || "github.com/jedbillyb/ghook";
+const FOOTER_TEXT = "WEBHOOK_FOOTER" in process.env
+  ? process.env.WEBHOOK_FOOTER
+  : "github.com/jedbillyb/ghook";
 const FOOTER_URL = "WEBHOOK_FOOTER_URL" in process.env
   ? process.env.WEBHOOK_FOOTER_URL
   : "https://github.com/jedbillyb/ghook";

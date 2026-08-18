@@ -127,3 +127,24 @@ test("default footer text is github.com/jedbillyb/ghook", (t) => {
   const footer = body.components[0].components.find((c) => c.content?.startsWith("-#"));
   assert.match(footer.content, /github\.com\/jedbillyb\/ghook/);
 });
+
+test('WEBHOOK_FOOTER="" drops the attribution and keeps the timestamp', (t) => {
+  const calls = captureRequest(t);
+  const send = freshSend({ WEBHOOK_FOOTER: "" });
+  send({ title: "x" });
+
+  const body = JSON.parse(calls[0].body);
+  const footer = body.components[0].components.find((c) => c.content?.startsWith("-#"));
+  assert.ok(footer, "expected the footer line to remain for the timestamp");
+  assert.doesNotMatch(footer.content, /ghook/);
+  assert.match(footer.content, /<t:\d+:R>/);
+});
+
+test('WEBHOOK_FOOTER="" drops the footer entirely in legacy embeds', (t) => {
+  const calls = captureRequest(t);
+  const send = freshSend({ DISCORD_LEGACY_EMBEDS: "true", WEBHOOK_FOOTER: "" });
+  send({ title: "x" });
+
+  const body = JSON.parse(calls[0].body);
+  assert.equal(body.embeds[0].footer, undefined);
+});
