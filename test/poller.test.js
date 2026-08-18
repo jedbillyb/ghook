@@ -188,3 +188,51 @@ test("a polled public repo is forwarded by default", () => {
   const { event, payload } = normalizeEvent(baseApiEvent, cache);
   assert.equal(shouldRoute(event, payload).allow, true);
 });
+
+const { selectNewEvents } = require("../src/poller");
+
+function freshState() {
+  return { etag: null, seenIds: new Set(), primed: false };
+}
+
+test("selectNewEvents records the first cycle without returning it", () => {
+  const state = freshState();
+  const selected = selectNewEvents([{ id: "2" }, { id: "1" }], state);
+  assert.deepEqual(selected, []);
+  assert.equal(state.primed, true);
+  assert.equal(state.seenIds.size, 2);
+});
+
+test("selectNewEvents returns only events unseen after priming", () => {
+  const state = freshState();
+  selectNewEvents([{ id: "2" }, { id: "1" }], state);
+  const selected = selectNewEvents([{ id: "3" }, { id: "2" }, { id: "1" }], state);
+  assert.deepEqual(selected.map((e) => e.id), ["3"]);
+});
+
+test("selectNewEvents returns events oldest-first", () => {
+  const state = freshState();
+  selectNewEvents([], state);
+  const selected = selectNewEvents([{ id: "3" }, { id: "2" }], state);
+  assert.deepEqual(selected.map((e) => e.id), ["2", "3"]);
+});
+
+test("selectNewEvents skips events without an id", () => {
+  const state = freshState();
+  selectNewEvents([], state);
+  const selected = selectNewEvents([{ id: "1" }, {}], state);
+  assert.deepEqual(selected.map((e) => e.id), ["1"]);
+});
+
+test("selectNewEvents returns nothing on a repeated payload", () => {
+  const state = freshState();
+  selectNewEvents([{ id: "1" }], state);
+  assert.deepEqual(selectNewEvents([{ id: "1" }], state), []);
+});
+
+test("selectNewEvents keeps seenIds bounded", () => {
+  const state = freshState();
+  selectNewEvents([], state);
+  for (let i = 0; i < 600; i++) selectNewEvents([{ id: `e${i}` }], state);
+  assert.ok(state.seenIds.size <= 500);
+});

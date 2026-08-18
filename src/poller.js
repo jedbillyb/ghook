@@ -76,6 +76,24 @@ function rateLimitPauseMs(headers, now) {
   return Math.max(0, reset * 1000 - now);
 }
 
+// Process newest-first is default from API; iterate in reverse for chronological order
+function selectNewEvents(events, state) {
+  const fresh = [];
+  for (const apiEvent of [...events].reverse()) {
+    if (!apiEvent.id || state.seenIds.has(apiEvent.id)) continue;
+    state.seenIds.add(apiEvent.id);
+    if (state.primed) fresh.push(apiEvent);
+  }
+  state.primed = true;
+
+  // Keep seenIds bounded
+  if (state.seenIds.size > 500) {
+    const arr = [...state.seenIds];
+    state.seenIds = new Set(arr.slice(arr.length - 300));
+  }
+  return fresh;
+}
+
 async function pollTarget(target, state, repoCache) {
   if (state.pausedUntil && Date.now() < state.pausedUntil) return;
 
@@ -102,9 +120,11 @@ async function pollTarget(target, state, repoCache) {
   if (result.etag) state.etag = result.etag;
 
   const events = Array.isArray(result.data) ? result.data : [];
+  const fresh = selectNewEvents(events, state);
+  if (fresh.length === 0) return;
 
   // Pre-warm repo cache for any repos we haven't seen yet
-  const repoNames = new Set(events.map((e) => e.repo && e.repo.name).filter(Boolean));
+  const repoNames = new Set(fresh.map((e) => e.repo && e.repo.name).filter(Boolean));
   await Promise.all(
     [...repoNames].filter((n) => !repoCache[n]).map(async (n) => {
       const details = await fetchRepoDetails(n);
@@ -112,23 +132,13 @@ async function pollTarget(target, state, repoCache) {
     })
   );
 
-  // Process newest-first is default from API; iterate in reverse for chronological order
-  for (const apiEvent of [...events].reverse()) {
-    if (!apiEvent.id || state.seenIds.has(apiEvent.id)) continue;
-    state.seenIds.add(apiEvent.id);
-
+  for (const apiEvent of fresh) {
     const normalized = normalizeEvent(apiEvent, repoCache);
     if (!normalized) continue;
 
     if (target.events && !target.events.includes(normalized.event)) continue;
 
     routeEvent(normalized.event, normalized.payload);
-  }
-
-  // Keep seenIds bounded
-  if (state.seenIds.size > 500) {
-    const arr = [...state.seenIds];
-    state.seenIds = new Set(arr.slice(arr.length - 300));
   }
 }
 
@@ -138,7 +148,7 @@ function startPoller() {
 
   console.log(`[poller] watching ${targets.length} target(s) every ${POLL_INTERVAL / 1000}s`);
 
-  const states = new Map(targets.map((t) => [t, { etag: null, seenIds: new Set(), pausedUntil: 0 }]));
+  const states = new Map(targets.map((t) => [t, { etag: null, seenIds: new Set(), pausedUntil: 0, primed: false }]));
   const repoCache = {};
 
   async function tick() {
@@ -149,4 +159,4 @@ function startPoller() {
   setInterval(tick, POLL_INTERVAL);
 }
 
-module.exports = { startPoller, parseTargets, buildTargets, rateLimitPauseMs };
+module.exports = { startPoller, parseTargets, buildTargets, rateLimitPauseMs, selectNewEvents };
