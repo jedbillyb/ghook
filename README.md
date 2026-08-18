@@ -30,7 +30,7 @@ A Node.js app that delivers rich, color-coded Discord embeds for every GitHub ev
 4. **Event Routing** - payload is dispatched to the correct handler via `X-GitHub-Event`
 5. **Discord Notification** - handler formats the event into an embed and posts to Discord
 
-For repos you don't control, ghook polls GitHub's Events API on a configurable interval instead. Repos you can read but not administer work the same way: give `GITHUB_TOKEN` an account with read access and set `NOTIFY_PRIVATE_REPOS=true`, since private repos are dropped by default.
+For repos you don't control, ghook polls GitHub's Events API on a configurable interval instead. Repos you can read but not administer work the same way: give `GITHUB_TOKEN` an account with read access and set `NOTIFY_PRIVATE_REPOS=true`, since private repos are dropped by default. The first cycle after a restart only records which events already exist, so a restart never replays history — events that occur while ghook is down are not delivered once it returns.
 
 ### GitHub Apps vs repository webhooks
 
