@@ -60,10 +60,20 @@ function shouldRoute(event, payload) {
     return { allow: false, reason: `event "${event}" is in IGNORED_EVENTS` };
   }
   if (!NOTIFY_PRIVATE_REPOS && isPrivateRepoPayload(payload)) {
+    const repo = payload.repository;
+    if (repo.visibility === "unknown") {
+      return {
+        allow: false,
+        reason:
+          `unknown visibility: ${repo.full_name} — repository metadata could not be ` +
+          `fetched, so the event was dropped rather than risk forwarding a private repo. ` +
+          `It is retried on the next poll`,
+      };
+    }
     return {
       allow: false,
       reason:
-        `private repository: ${payload.repository.full_name} — ` +
+        `private repository: ${repo.full_name} — ` +
         `set NOTIFY_PRIVATE_REPOS=true to forward its events`,
     };
   }
