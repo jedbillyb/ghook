@@ -198,7 +198,7 @@ GITHUB_TOKEN=ghp_xxxx
 | `WATCH_ORGS` | - | Public orgs to poll. Same syntax as `WATCH_REPOS` |
 | `WATCH_USERS` | - | Public users to poll. Same syntax as `WATCH_REPOS` |
 | `POLL_INTERVAL` | `60000` | Polling interval in ms |
-| `GITHUB_TOKEN` | - | PAT for GitHub API auth - raises rate limit from 60 to 5000 req/hr |
+| `GITHUB_TOKEN` | - | PAT for GitHub API auth - raises rate limit from 60 to 5000 req/hr. Without it, one target at the default interval already sits at the unauthenticated ceiling |
 
 ---
 

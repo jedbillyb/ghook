@@ -49,9 +49,9 @@ function githubGet(path, etag) {
       res.on("data", (c) => { body += c; });
       res.on("end", () => {
         try {
-          resolve({ status: res.statusCode, etag: res.headers.etag, data: JSON.parse(body) });
+          resolve({ status: res.statusCode, etag: res.headers.etag, headers: res.headers, data: JSON.parse(body) });
         } catch {
-          resolve({ status: res.statusCode });
+          resolve({ status: res.statusCode, headers: res.headers });
         }
       });
     });
@@ -68,11 +68,33 @@ async function fetchRepoDetails(fullName) {
   return result.status === 200 ? result.data : null;
 }
 
+function rateLimitPauseMs(headers, now) {
+  if (!headers) return 0;
+  if (Number(headers["x-ratelimit-remaining"]) !== 0) return 0;
+  const reset = Number(headers["x-ratelimit-reset"]);
+  if (!Number.isFinite(reset)) return 0;
+  return Math.max(0, reset * 1000 - now);
+}
+
 async function pollTarget(target, state, repoCache) {
+  if (state.pausedUntil && Date.now() < state.pausedUntil) return;
+
   const result = await githubGet(apiPath(target), state.etag);
 
   if (result.status === 304 || result.status === 0) return;
   if (result.status !== 200) {
+    const pause = rateLimitPauseMs(result.headers, Date.now());
+    if (pause > 0) {
+      state.pausedUntil = Date.now() + pause;
+      const hint = GITHUB_TOKEN
+        ? ""
+        : " — set GITHUB_TOKEN to raise the limit from 60 to 5000 requests per hour";
+      console.warn(
+        `[poller] GitHub rate limit reached for ${target.kind}:${target.id}; ` +
+        `pausing ${Math.ceil(pause / 1000)}s${hint}`
+      );
+      return;
+    }
     console.warn(`[poller] unexpected status ${result.status} for ${target.kind}:${target.id}`);
     return;
   }
@@ -116,7 +138,7 @@ function startPoller() {
 
   console.log(`[poller] watching ${targets.length} target(s) every ${POLL_INTERVAL / 1000}s`);
 
-  const states = new Map(targets.map((t) => [t, { etag: null, seenIds: new Set() }]));
+  const states = new Map(targets.map((t) => [t, { etag: null, seenIds: new Set(), pausedUntil: 0 }]));
   const repoCache = {};
 
   async function tick() {
@@ -127,4 +149,4 @@ function startPoller() {
   setInterval(tick, POLL_INTERVAL);
 }
 
-module.exports = { startPoller, parseTargets, buildTargets };
+module.exports = { startPoller, parseTargets, buildTargets, rateLimitPauseMs };
