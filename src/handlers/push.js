@@ -58,7 +58,7 @@ function sendPushMessage(payload, event) {
       { name: t("field.repository"), value: `[${repository.full_name}](${repository.html_url})`, inline: true },
       { name: isTag ? t("field.tag") : t("field.branch"), value: `\`${branch}\``, inline: true },
     ],
-  }, event);
+  }, event, payload);
 }
 
 module.exports = { handlePush };

@@ -90,8 +90,8 @@ function toLegacyEmbed(spec) {
   return embed;
 }
 
-function send(spec, event) {
-  const url = resolver.resolve(event);
+function send(spec, event, payload) {
+  const url = resolver.resolve(event, payload);
   if (LEGACY_EMBEDS) sendLegacy(url, spec);
   else sendV2(url, spec);
 }
