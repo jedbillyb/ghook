@@ -148,3 +148,86 @@ test('WEBHOOK_FOOTER="" drops the footer entirely in legacy embeds', (t) => {
   const body = JSON.parse(calls[0].body);
   assert.equal(body.embeds[0].footer, undefined);
 });
+
+function captureWithResponses(t, responses) {
+  const calls = [];
+  const original = https.request;
+  https.request = (opts, cb) => {
+    const call = { opts, body: "" };
+    calls.push(call);
+    const spec = responses[calls.length - 1] || { statusCode: 204 };
+    return {
+      on() {},
+      write(data) { call.body += data; },
+      end() {
+        const listeners = {};
+        const res = {
+          statusCode: spec.statusCode,
+          statusMessage: spec.statusMessage || "",
+          headers: spec.headers || {},
+          setEncoding() {},
+          resume() {},
+          on(evt, fn) {
+            (listeners[evt] = listeners[evt] || []).push(fn);
+            return res;
+          },
+        };
+        if (cb) cb(res);
+        if (spec.body) for (const fn of listeners.data || []) fn(spec.body);
+        for (const fn of listeners.end || []) fn();
+      },
+    };
+  };
+  t.after(() => { https.request = original; });
+  return calls;
+}
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+test("429 is retried using retry_after from the response body", async (t) => {
+  const calls = captureWithResponses(t, [
+    { statusCode: 429, body: JSON.stringify({ retry_after: 0.01 }) },
+    { statusCode: 204 },
+  ]);
+  const send = freshSend();
+  send({ title: "x" });
+
+  assert.equal(calls.length, 1);
+  await wait(60);
+  assert.equal(calls.length, 2, "expected the message to be sent again");
+  assert.equal(calls[0].body, calls[1].body, "expected the same payload to be resent");
+});
+
+test("429 falls back to the Retry-After header when the body has no retry_after", async (t) => {
+  const calls = captureWithResponses(t, [
+    { statusCode: 429, headers: { "retry-after": "0.01" }, body: "not json" },
+    { statusCode: 204 },
+  ]);
+  const send = freshSend();
+  send({ title: "x" });
+
+  await wait(60);
+  assert.equal(calls.length, 2);
+});
+
+test("429 gives up after MAX_RETRIES instead of retrying forever", async (t) => {
+  const rateLimited = { statusCode: 429, body: JSON.stringify({ retry_after: 0.01 }) };
+  const calls = captureWithResponses(t, [rateLimited, rateLimited, rateLimited, rateLimited]);
+  const send = freshSend();
+  send({ title: "x" });
+
+  await wait(150);
+  assert.equal(calls.length, 3, "expected the initial attempt plus two retries");
+});
+
+test("non-429 errors are not retried", async (t) => {
+  const calls = captureWithResponses(t, [
+    { statusCode: 400, body: JSON.stringify({ message: "bad" }) },
+    { statusCode: 204 },
+  ]);
+  const send = freshSend();
+  send({ title: "x" });
+
+  await wait(60);
+  assert.equal(calls.length, 1);
+});

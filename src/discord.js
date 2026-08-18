@@ -13,7 +13,22 @@ const FLAG_IS_COMPONENTS_V2 = 1 << 15;
 
 const resolver = buildResolver(process.env);
 
-function post(url, body, { withComponents } = {}) {
+const MAX_RETRIES = 2;
+const DEFAULT_RETRY_MS = 1000;
+
+function retryDelayMs(headers, rawBody) {
+  try {
+    const parsed = JSON.parse(rawBody);
+    if (typeof parsed.retry_after === "number") {
+      return Math.ceil(parsed.retry_after * 1000);
+    }
+  } catch {}
+  const header = Number(headers["retry-after"]);
+  if (Number.isFinite(header)) return Math.ceil(header * 1000);
+  return DEFAULT_RETRY_MS;
+}
+
+function post(url, body, { withComponents } = {}, attempt = 0) {
   if (!url) {
     console.error("Discord send skipped: no webhook URL resolved.");
     return;
@@ -35,12 +50,19 @@ function post(url, body, { withComponents } = {}) {
       res.resume();
       return;
     }
-    let body = "";
+    let raw = "";
     res.setEncoding("utf8");
-    res.on("data", (chunk) => { body += chunk; });
+    res.on("data", (chunk) => { raw += chunk; });
     res.on("end", () => {
+      if (res.statusCode === 429 && attempt < MAX_RETRIES) {
+        const delay = retryDelayMs(res.headers || {}, raw);
+        console.warn(`Discord rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}).`);
+        const timer = setTimeout(() => post(url, body, { withComponents }, attempt + 1), delay);
+        if (typeof timer.unref === "function") timer.unref();
+        return;
+      }
       console.error(`Discord API error: ${res.statusCode} ${res.statusMessage || ""}`.trim());
-      if (body) console.error("Discord response body:", body);
+      if (raw) console.error("Discord response body:", raw);
     });
   });
   req.on("error", (e) => console.error("Discord send error:", e.message));
