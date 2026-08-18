@@ -16,7 +16,7 @@ A Node.js app that delivers rich, color-coded Discord embeds for every GitHub ev
 - **Public repo polling** - watch any public repo, org, or user without them installing anything
 - **Rich Discord embeds** - color-coded notifications with avatars, links, and context
 - **HMAC-SHA256 verification** - every webhook payload verified before processing
-- **Rate-limit aware** - Discord 429 responses are retried using the delay Discord returns
+- **Rate-limit aware** - Discord 429 responses are retried using the delay Discord returns, and messages to the same webhook are sent in order
 - **Per-target event filters** - route different events to different Discord channels
 - **Minimal dependencies** - Express.js and Node.js stdlib only
 

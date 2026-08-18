@@ -231,3 +231,94 @@ test("non-429 errors are not retried", async (t) => {
   await wait(60);
   assert.equal(calls.length, 1);
 });
+
+function captureManual(t) {
+  const calls = [];
+  const original = https.request;
+  https.request = (opts, cb) => {
+    const call = { opts, body: "", respond: null };
+    calls.push(call);
+    return {
+      on() {},
+      write(data) { call.body += data; },
+      end() {
+        call.respond = (spec = { statusCode: 204 }) => {
+          const listeners = {};
+          const res = {
+            statusCode: spec.statusCode,
+            statusMessage: spec.statusMessage || "",
+            headers: spec.headers || {},
+            setEncoding() {},
+            resume() {},
+            on(evt, fn) {
+              (listeners[evt] = listeners[evt] || []).push(fn);
+              return res;
+            },
+          };
+          if (cb) cb(res);
+          if (spec.body) for (const fn of listeners.data || []) fn(spec.body);
+          for (const fn of listeners.end || []) fn();
+        };
+      },
+    };
+  };
+  t.after(() => { https.request = original; });
+  return calls;
+}
+
+test("messages to the same webhook are sent one at a time", async (t) => {
+  const calls = captureManual(t);
+  const send = freshSend();
+
+  send({ title: "first" });
+  send({ title: "second" });
+
+  assert.equal(calls.length, 1, "the second message must wait for the first to complete");
+  calls[0].respond();
+  await wait(20);
+
+  assert.equal(calls.length, 2);
+  assert.match(calls[1].body, /second/);
+});
+
+test("a retried message still lands before the message queued behind it", async (t) => {
+  const calls = captureManual(t);
+  const send = freshSend();
+
+  send({ title: "first" });
+  send({ title: "second" });
+
+  calls[0].respond({ statusCode: 429, body: JSON.stringify({ retry_after: 0.01 }) });
+  await wait(60);
+
+  assert.equal(calls.length, 2);
+  assert.match(calls[1].body, /first/, "the retry must go out before the queued message");
+
+  calls[1].respond();
+  await wait(20);
+
+  assert.equal(calls.length, 3);
+  assert.match(calls[2].body, /second/);
+});
+
+test("separate webhooks are not blocked by each other", async (t) => {
+  const calls = captureManual(t);
+  const send = freshSend({ DISCORD_WEBHOOK_CI: "https://discord.example/api/webhooks/2/ci", ROUTES: "workflow_run:CI" });
+
+  send({ title: "push" }, "push");
+  send({ title: "ci" }, "workflow_run");
+
+  assert.equal(calls.length, 2, "a busy webhook must not hold up a different one");
+});
+
+test("the queue is released once a webhook drains", async (t) => {
+  const calls = captureManual(t);
+  const send = freshSend();
+
+  send({ title: "first" });
+  calls[0].respond();
+  await wait(20);
+
+  send({ title: "second" });
+  assert.equal(calls.length, 2, "a drained queue must not defer the next message");
+});
