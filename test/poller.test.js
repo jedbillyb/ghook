@@ -67,7 +67,6 @@ test("normalizeEvent constructs repository from repo.name", () => {
   assert.equal(result.payload.repository.full_name, "jedbillyb/ghook");
   assert.equal(result.payload.repository.html_url, "https://github.com/jedbillyb/ghook");
   assert.equal(result.payload.repository.name, "ghook");
-  assert.equal(result.payload.repository.private, false);
 });
 
 test("normalizeEvent constructs sender from actor", () => {
@@ -136,4 +135,56 @@ test("rateLimitPauseMs ignores responses without rate limit headers", () => {
   assert.equal(rateLimitPauseMs(undefined, NOW), 0);
   assert.equal(rateLimitPauseMs({}, NOW), 0);
   assert.equal(rateLimitPauseMs({ "x-ratelimit-remaining": "0" }, NOW), 0);
+});
+
+function freshRouterFor(env = {}) {
+  for (const key of ["IGNORED_EVENTS", "BRANCH_FILTER", "NOTIFY_PRIVATE_REPOS"]) {
+    delete process.env[key];
+  }
+  Object.assign(process.env, env);
+  delete require.cache[require.resolve("../src/router")];
+  return require("../src/router").shouldRoute;
+}
+
+test("normalizeEvent carries the cached visibility of a private repo", () => {
+  const cache = { "jedbillyb/ghook": { private: true } };
+  const result = normalizeEvent(baseApiEvent, cache);
+  assert.equal(result.payload.repository.private, true);
+});
+
+test("normalizeEvent carries the cached visibility of a public repo", () => {
+  const cache = { "jedbillyb/ghook": { private: false } };
+  const result = normalizeEvent(baseApiEvent, cache);
+  assert.equal(result.payload.repository.private, false);
+});
+
+test("normalizeEvent assumes private when visibility is unknown", () => {
+  assert.equal(normalizeEvent(baseApiEvent).payload.repository.private, true);
+  assert.equal(normalizeEvent(baseApiEvent, {}).payload.repository.private, true);
+  assert.equal(
+    normalizeEvent(baseApiEvent, { "jedbillyb/ghook": { description: "no visibility" } })
+      .payload.repository.private,
+    true
+  );
+});
+
+test("a polled private repo is dropped by default", () => {
+  const shouldRoute = freshRouterFor({});
+  const cache = { "jedbillyb/ghook": { private: true } };
+  const { event, payload } = normalizeEvent(baseApiEvent, cache);
+  assert.equal(shouldRoute(event, payload).allow, false);
+});
+
+test("a polled private repo is forwarded with NOTIFY_PRIVATE_REPOS=true", () => {
+  const shouldRoute = freshRouterFor({ NOTIFY_PRIVATE_REPOS: "true" });
+  const cache = { "jedbillyb/ghook": { private: true } };
+  const { event, payload } = normalizeEvent(baseApiEvent, cache);
+  assert.equal(shouldRoute(event, payload).allow, true);
+});
+
+test("a polled public repo is forwarded by default", () => {
+  const shouldRoute = freshRouterFor({});
+  const cache = { "jedbillyb/ghook": { private: false } };
+  const { event, payload } = normalizeEvent(baseApiEvent, cache);
+  assert.equal(shouldRoute(event, payload).allow, true);
 });

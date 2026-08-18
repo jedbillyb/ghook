@@ -90,3 +90,11 @@ test("decision.reason is set when blocked", () => {
   assert.equal(decision.allow, false);
   assert.match(decision.reason, /feature\/x/);
 });
+
+test("private repo reason names the variable that would allow it", () => {
+  const shouldRoute = freshShouldRoute({});
+  const decision = shouldRoute("push", { repository: privateRepo, ref: "refs/heads/main" });
+  assert.equal(decision.allow, false);
+  assert.match(decision.reason, /a\/b/);
+  assert.match(decision.reason, /NOTIFY_PRIVATE_REPOS=true/);
+});

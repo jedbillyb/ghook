@@ -30,7 +30,7 @@ A Node.js app that delivers rich, color-coded Discord embeds for every GitHub ev
 4. **Event Routing** - payload is dispatched to the correct handler via `X-GitHub-Event`
 5. **Discord Notification** - handler formats the event into an embed and posts to Discord
 
-For public repos you don't control, ghook polls GitHub's Events API on a configurable interval instead.
+For repos you don't control, ghook polls GitHub's Events API on a configurable interval instead. Repos you can read but not administer work the same way: give `GITHUB_TOKEN` an account with read access and set `NOTIFY_PRIVATE_REPOS=true`, since private repos are dropped by default.
 
 ### GitHub Apps vs repository webhooks
 
@@ -195,9 +195,9 @@ GITHUB_TOKEN=ghp_xxxx
 | `BRANCH_FILTER` | - | Comma-separated branch patterns for push/create/delete. `*` matches one segment |
 | `ROUTES` | - | Map events to named webhooks: `release:RELEASES,workflow_run:CI` |
 | `LOCALE` | `en` | Message language. Supported: `en`, `fr` |
-| `WATCH_REPOS` | - | Public repos to poll. `;` separates targets, `:events` filters by event type |
-| `WATCH_ORGS` | - | Public orgs to poll. Same syntax as `WATCH_REPOS` |
-| `WATCH_USERS` | - | Public users to poll. Same syntax as `WATCH_REPOS` |
+| `WATCH_REPOS` | - | Repos to poll. `;` separates targets, `:events` filters by event type. Private repos need a `GITHUB_TOKEN` with read access and `NOTIFY_PRIVATE_REPOS=true` |
+| `WATCH_ORGS` | - | Orgs to poll. Same syntax as `WATCH_REPOS` |
+| `WATCH_USERS` | - | Users to poll. Same syntax as `WATCH_REPOS`. Public events only |
 | `POLL_INTERVAL` | `60000` | Polling interval in ms |
 | `GITHUB_TOKEN` | - | PAT for GitHub API auth - raises rate limit from 60 to 5000 req/hr. Without it, one target at the default interval already sits at the unauthenticated ceiling |
 

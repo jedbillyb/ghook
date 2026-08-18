@@ -60,7 +60,12 @@ function shouldRoute(event, payload) {
     return { allow: false, reason: `event "${event}" is in IGNORED_EVENTS` };
   }
   if (!NOTIFY_PRIVATE_REPOS && isPrivateRepoPayload(payload)) {
-    return { allow: false, reason: `private repository: ${payload.repository.full_name}` };
+    return {
+      allow: false,
+      reason:
+        `private repository: ${payload.repository.full_name} — ` +
+        `set NOTIFY_PRIVATE_REPOS=true to forward its events`,
+    };
   }
   if (BRANCH_SCOPED_EVENTS.has(event) && BRANCH_FILTER_REGEXES.length > 0) {
     const branch = extractBranch(event, payload);

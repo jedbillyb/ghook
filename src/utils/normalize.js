@@ -25,7 +25,7 @@ function normalizeEvent(apiEvent, repoCache = {}) {
     name,
     owner: { login: owner },
     html_url: htmlUrl,
-    private: false,
+    private: typeof cached.private === "boolean" ? cached.private : true,
     description: cached.description || null,
     stargazers_count: cached.stargazers_count,
     forks_count: cached.forks_count,
