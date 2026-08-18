@@ -102,7 +102,7 @@ function post(url, body, { withComponents } = {}) {
   }
   const pending = queues.get(url);
   const next = pending
-    ? pending.then(() => deliver(url, body, { withComponents }))
+    ? pending.catch(() => {}).then(() => deliver(url, body, { withComponents }))
     : deliver(url, body, { withComponents });
 
   queues.set(url, next);

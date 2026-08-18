@@ -20,12 +20,16 @@ function normalizeEvent(apiEvent, repoCache = {}) {
   const htmlUrl = `https://github.com/${fullName}`;
 
   const cached = repoCache[fullName] || {};
+  const visibility = typeof cached.private === "boolean"
+    ? (cached.private ? "private" : "public")
+    : "unknown";
   const repository = {
     full_name: fullName,
     name,
     owner: { login: owner },
     html_url: htmlUrl,
-    private: typeof cached.private === "boolean" ? cached.private : true,
+    visibility,
+    private: visibility !== "public",
     description: cached.description || null,
     stargazers_count: cached.stargazers_count,
     forks_count: cached.forks_count,

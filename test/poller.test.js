@@ -236,3 +236,36 @@ test("selectNewEvents keeps seenIds bounded", () => {
   for (let i = 0; i < 600; i++) selectNewEvents([{ id: `e${i}` }], state);
   assert.ok(state.seenIds.size <= 500);
 });
+
+test("normalizeEvent labels visibility from the cache", () => {
+  assert.equal(
+    normalizeEvent(baseApiEvent, { "jedbillyb/ghook": { private: true } }).payload.repository.visibility,
+    "private"
+  );
+  assert.equal(
+    normalizeEvent(baseApiEvent, { "jedbillyb/ghook": { private: false } }).payload.repository.visibility,
+    "public"
+  );
+});
+
+test("normalizeEvent labels visibility unknown on a cache miss", () => {
+  assert.equal(normalizeEvent(baseApiEvent, {}).payload.repository.visibility, "unknown");
+});
+
+test("an unknown-visibility drop does not claim the repo is private", () => {
+  const shouldRoute = freshRouterFor({});
+  const { event, payload } = normalizeEvent(baseApiEvent, {});
+  const decision = shouldRoute(event, payload);
+  assert.equal(decision.allow, false);
+  assert.match(decision.reason, /unknown visibility/);
+  assert.doesNotMatch(decision.reason, /NOTIFY_PRIVATE_REPOS=true/);
+});
+
+test("a known-private drop still points at NOTIFY_PRIVATE_REPOS", () => {
+  const shouldRoute = freshRouterFor({});
+  const { event, payload } = normalizeEvent(baseApiEvent, { "jedbillyb/ghook": { private: true } });
+  const decision = shouldRoute(event, payload);
+  assert.equal(decision.allow, false);
+  assert.match(decision.reason, /private repository/);
+  assert.match(decision.reason, /NOTIFY_PRIVATE_REPOS=true/);
+});
